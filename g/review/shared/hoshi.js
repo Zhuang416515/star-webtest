@@ -86,5 +86,13 @@
     } catch (e) {}
   };
 
+  // 启动画面：至少显示 0.9 秒，资源加载完后淡出
+  var t0 = Date.now();
+  window.addEventListener('load', function () {
+    var el = document.getElementById('splash');
+    if (!el) return;
+    setTimeout(function () { el.classList.add('out'); setTimeout(function () { el.remove(); }, 500); }, Math.max(0, 900 - (Date.now() - t0)));
+  });
+
   window.Hoshi = H;
 })();

@@ -35,3 +35,35 @@ canvas { display: block; }
 .promo-card b { font-size: 15px; }
 .promo-card span { font-size: 12px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .promo-card em { font-style: normal; font-weight: 700; font-size: 13px; color: #fff; background: var(--pink); padding: 6px 12px; border-radius: 10px; }
+
+/* 启动画面：弹跳的星星 */
+#splash {
+  position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(120% 80% at 50% 35%, #4a2f8f 0%, #261a5c 55%, #160f38 100%); transition: opacity .5s ease;
+}
+#splash.out { opacity: 0; pointer-events: none; }
+#splash .ball {
+  width: 92px; height: 92px; border-radius: 50%; position: relative; transform-origin: 50% 100%;
+  background: radial-gradient(circle at 35% 30%, #fff6c8 0%, #ffd86b 45%, #f0a93a 100%);
+  box-shadow: 0 0 30px rgba(255, 216, 107, .55); animation: sp-hop 1s infinite cubic-bezier(.3,0,.4,1);
+}
+#splash .ball::before, #splash .ball::after { /* 眼睛 */
+  content: ""; position: absolute; top: 40px; width: 11px; height: 13px; border-radius: 50%; background: #3b2a5c;
+  box-shadow: inset 3px -3px 0 -1px #fff;
+}
+#splash .ball::before { left: 26px; } #splash .ball::after { right: 26px; }
+#splash .mouth { position: absolute; left: 50%; top: 56px; width: 14px; height: 7px; margin-left: -7px; border-radius: 0 0 14px 14px; background: #3b2a5c; }
+#splash .cheek { position: absolute; top: 56px; width: 14px; height: 8px; border-radius: 50%; background: rgba(255, 110, 150, .5); }
+#splash .cheek.l { left: 12px; } #splash .cheek.r { right: 12px; }
+#splash .shadow { width: 64px; height: 10px; margin-top: 10px; border-radius: 50%; background: rgba(0,0,0,.35); animation: sp-shadow 1s infinite cubic-bezier(.3,0,.4,1); }
+#splash .name { margin-top: 18px; font-size: 26px; font-weight: 800; letter-spacing: 3px; color: var(--gold); text-shadow: 0 3px 0 #7a4fd0; }
+#splash .dots span { display: inline-block; width: 8px; height: 8px; margin: 14px 4px 0; border-radius: 50%; background: var(--pink); animation: sp-dot 1s infinite ease-in-out; }
+#splash .dots span:nth-child(2) { animation-delay: .15s; background: var(--gold); }
+#splash .dots span:nth-child(3) { animation-delay: .3s; background: #9fdcff; }
+@keyframes sp-hop {
+  0% { transform: translateY(0) scale(1.15, .85); } 15% { transform: translateY(-8px) scale(.93, 1.08); }
+  50% { transform: translateY(-50px) scale(1, 1); } 85% { transform: translateY(-4px) scale(.96, 1.05); }
+  100% { transform: translateY(0) scale(1.15, .85); }
+}
+@keyframes sp-shadow { 0%, 100% { transform: scale(1); opacity: .45; } 50% { transform: scale(.55); opacity: .2; } }
+@keyframes sp-dot { 0%, 100% { transform: translateY(0); opacity: .5; } 50% { transform: translateY(-8px); opacity: 1; } }
