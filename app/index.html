@@ -1,150 +1,76 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>星占い</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-  </head>
-  <body>
-    <div id="unity-container" class="unity-desktop">
-      <div id="unity-fullscreen-container">
-        <canvas id="unity-canvas" width="960" height="600" tabindex="-1"></canvas>
-        <div id="unity-loading-container">
-          <div id="unity-loading-bar">
-            <div id="unity-logo"></div>
-            <div id="unity-progress-bar-empty">
-              <div id="unity-progress-bar-full"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="unity-warning"> </div>
-      <div id="unity-footer">
-        <div id="unity-logo-title-footer"></div>
-        <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">星占い</div>
-      </div>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>星占い</title>
+<link rel="icon" href="TemplateData/favicon.png">
+<link rel="stylesheet" href="TemplateData/style.css">
+</head>
+<body>
+<div id="frame">
+  <canvas id="unity-canvas" tabindex="-1"></canvas>
+  <div id="loading">
+    <div class="sky"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="stage">
+      <div class="orbit"><b>★</b><b>★</b><b>★</b></div>
+      <img class="spirit" src="TemplateData/spirit.png" alt="">
+      <div class="shadow"></div>
     </div>
-    <script>
-      let canvas = document.querySelector("#unity-canvas");
-      let fullscreenContainer = document.querySelector("#unity-fullscreen-container");
+    <div class="name">星占い</div>
+    <div class="bar"><div class="fill" id="fill"></div><div class="star" id="star">★</div></div>
+    <div class="tip" id="tip"></div>
+  </div>
+</div>
+<script>
+  var canvas = document.querySelector("#unity-canvas");
+  var zh = /^zh/i.test(navigator.language || "");
+  var tips = zh
+    ? ["正在收集星星…", "正在读取今日运势…", "星灵正在打扮中…", "正在准备神签…"]
+    : ["星をあつめています…", "今日の運勢をよみこみ中…", "星霊がおめかし中…", "おみくじを準備しています…"];
+  var tipEl = document.getElementById("tip"), ti = 0;
+  tipEl.textContent = tips[0];
+  var tipTimer = setInterval(function () { ti = (ti + 1) % tips.length; tipEl.textContent = tips[ti]; }, 1600);
 
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        var warningBanner = document.querySelector("#unity-warning");
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-        }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
-      }
+  var shown = 0, target = 0;
+  function setProgress(p) { target = Math.max(target, p); }
+  (function animate() { // 进度条平滑前进，加载时也有一点点在动
+    shown += (target - shown) * 0.08 + 0.0004;
+    if (shown > target + 0.03) shown = target + 0.03;
+    var w = Math.min(100, shown * 100);
+    document.getElementById("fill").style.width = w + "%";
+    document.getElementById("star").style.left = w + "%";
+    if (!window.__loaded) requestAnimationFrame(animate);
+  })();
 
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/b89c629d0f1728d12698280fdb9e5e88.loader.js";
-      var config = {
-        arguments: [],
-        dataUrl: buildUrl + "/66f355f5056f2b4ce222bc574638f13e.data.unityweb",
-        frameworkUrl: buildUrl + "/1be006eebe30afc5f47a8f7d41d7c409.framework.js.unityweb",
-        codeUrl: buildUrl + "/08d1b01e4d4d45c261c35355114aba00.wasm.unityweb",
-        streamingAssetsUrl: "StreamingAssets",
+  function done() {
+    window.__loaded = true;
+    clearInterval(tipTimer);
+    var el = document.getElementById("loading");
+    el.classList.add("out");
+    setTimeout(function () { el.style.display = "none"; }, 600);
+  }
 
-        // If you have a custom web site structure, or want to place multiple Unity build instances on the same page,
-        // you can pass fullscreenElementID: "my-unity-fullscreen-container-id", in this configuration field to
-        // explicitly point to the element tree root that is displayed in fullscreen mode.
-        fullscreenElementID: "unity-fullscreen-container",
+  var buildUrl = "Build";
+  var config = {
+    arguments: [],
+    dataUrl: buildUrl + "/230025855b346d393ae6f777831ae1ff.data.unityweb",
+    frameworkUrl: buildUrl + "/1be006eebe30afc5f47a8f7d41d7c409.framework.js.unityweb",
+    codeUrl: buildUrl + "/08d1b01e4d4d45c261c35355114aba00.wasm.unityweb",
+    streamingAssetsUrl: "StreamingAssets",
+    companyName: "DefaultCompany",
+    productName: "lineGame",
+    productVersion: "1.0",
+  };
 
-        companyName: "DefaultCompany",
-        productName: "lineGame",
-        productVersion: "1.0",
-        showBanner: unityShowBanner,
-        // errorHandler: function(err, url, line) {
-        //    alert("error " + err + " occurred at line " + line);
-        //    // Return 'true' if you handled this error and don't want Unity
-        //    // to process it further, 'false' otherwise.
-        //    return true;
-        // },
-      };
-
-      // By default, Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
-
-      // If you would like all file writes inside Unity Application.persistentDataPath
-      // directory to automatically persist so that the contents are remembered when
-      // the user revisits the site the next time, uncomment the following line:
-      // config.autoSyncPersistentDataPath = true;
-      // This autosyncing is currently not the default behavior to avoid regressing
-      // existing user projects that might rely on the earlier manual
-      // JS_FileSystem_Sync() behavior, but in future Unity version, this will be
-      // expected to change.
-
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
-
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-        document.querySelector("#unity-container").className = "unity-mobile";
-        canvas.className = "unity-mobile";
-
-        // To lower canvas resolution on mobile devices to gain some
-        // performance, uncomment the following line:
-        // config.devicePixelRatio = 1;
-
-
-      } else {
-        // Desktop style: Render the game canvas container in a window that can be maximized to fullscreen:
-        fullscreenContainer.style.width = "960px";
-        fullscreenContainer.style.height = "600px";
-      }
-
-
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        const loadingContainer = document.querySelector("#unity-loading-container");
-        const progressBarFull = document.querySelector("#unity-progress-bar-full");
-
-        createUnityInstance(canvas, config, (progress) => {
-          if (progress < 1) {
-            loadingContainer.style.display = "block";
-            progressBarFull.style.width = 100 * progress + "%";
-          } else {
-            loadingContainer.style.display = "none";
-          }
-        }).then((unityInstance) => {
-                document.querySelector("#unity-fullscreen-button").onclick = () => {
-                  unityInstance.SetFullscreen(1);
-                };
-
-              }).catch((message) => {
-                alert(message);
-              });
-            };
-
-      document.body.appendChild(script);
-
-    </script>
-  </body>
+  var script = document.createElement("script");
+  script.src = buildUrl + "/b89c629d0f1728d12698280fdb9e5e88.loader.js";
+  script.onload = function () {
+    createUnityInstance(canvas, config, function (p) { setProgress(p * 0.95); })
+      .then(function () { setProgress(1); setTimeout(done, 350); })
+      .catch(function (message) { tipEl.textContent = message; });
+  };
+  document.body.appendChild(script);
+</script>
+</body>
 </html>
