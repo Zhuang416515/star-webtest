@@ -12,7 +12,7 @@ html, body {
 canvas { display: block; }
 .overlay {
   position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 14px; padding: 24px 16px; background: rgba(12, 8, 34, 0.82); text-align: center; overflow-y: auto; touch-action: pan-y;
+  gap: 14px; padding: 24px 16px; background: rgba(12, 8, 34, 0.93); text-align: center; overflow-y: auto; touch-action: pan-y;
 }
 .overlay.hidden { display: none; }
 .title { font-size: 40px; font-weight: 800; color: var(--gold); letter-spacing: 2px; text-shadow: 0 3px 0 #7a4fd0; margin: 0; }

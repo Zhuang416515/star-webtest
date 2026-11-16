@@ -38,7 +38,7 @@ function drawTier(ctx, t, x, y, r, a, blink) {
   var g = ctx.createRadialGradient(-r * 0.35, -r * 0.4, r * 0.1, 0, 0, r);
   g.addColorStop(0, shade(tier.c, 0.55)); g.addColorStop(0.7, tier.c); g.addColorStop(1, shade(tier.c, -0.25));
   ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill();
-  deco(ctx, t, r);
+  ctx.save(); ctx.clip(); deco(ctx, t, r); ctx.restore(); // 装饰不超出圆
   if (t === 7) ring(ctx, r, true);
   ctx.rotate(-a);
   face(ctx, r, blink);
@@ -56,7 +56,7 @@ function ring(ctx, r, front) {
 function deco(ctx, t, r) {
   ctx.fillStyle = 'rgba(255,255,255,.35)';
   if (t === 2) { // 金平糖：小突起
-    for (var i = 0; i < 8; i++) { var q = i * Math.PI / 4; ctx.beginPath(); ctx.arc(Math.cos(q) * r * 0.92, Math.sin(q) * r * 0.92, r * 0.18, 0, 7); ctx.fill(); }
+    for (var i = 0; i < 8; i++) { var q = i * Math.PI / 4; ctx.beginPath(); ctx.arc(Math.cos(q) * r * 0.78, Math.sin(q) * r * 0.78, r * 0.16, 0, 7); ctx.fill(); }
   } else if (t === 4) { // 新月：阴影
     ctx.fillStyle = 'rgba(80,60,150,.35)'; ctx.beginPath(); ctx.arc(r * 0.45, -r * 0.1, r * 0.8, 0, 7); ctx.fill();
   } else if (t === 5 || t === 8) { // 坑 / 云

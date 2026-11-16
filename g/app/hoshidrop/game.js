@@ -11,7 +11,7 @@
   };
   var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
   var $ = function (id) { return document.getElementById(id); };
-  var S, H, dpr, left = 12, right = W - 12, top = 130, bottom, dropY = 104, dangerY = 140;
+  var S, H, dpr, ox = 0, oy = 0, left = 12, right = W - 12, top, bottom, dropY, dangerY;
   var engine, balls, parts, score, shown, best = Hoshi.load('hoshidrop.best', 0), maxTier;
   var cur, next, aimX = W / 2, cooldown = 0, overTimer = 0, running = false, shake = 0, last = 0, acc = 0, queue = [];
 
@@ -21,7 +21,10 @@
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
     cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px';
-    S = innerWidth / W; H = innerHeight / S; bottom = H - 52;
+    // 宽屏时保持竖屏比例并居中；瓶子高度有上限，多出的空间留在上方
+    S = Math.min(innerWidth / W, innerHeight / (W * 1.55)); ox = (innerWidth / S - W) / 2; H = innerHeight / S;
+    bottom = H - 52; top = Math.max(130, bottom - 480); oy = top - 130;
+    dangerY = top + 10; dropY = top - 26;
   }
 
   function pick() { var r = Math.random(); return r < 0.3 ? 0 : r < 0.58 ? 1 : r < 0.8 ? 2 : r < 0.92 ? 3 : 4; }
@@ -99,7 +102,8 @@
 
   function render() {
     ctx.setTransform(dpr * S, 0, 0, dpr * S, 0, 0);
-    ctx.clearRect(0, 0, W, H);
+    ctx.clearRect(0, 0, innerWidth / S, H);
+    ctx.translate(ox, 0);
     ctx.save();
     if (shake > 0.3) ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
     // 瓶子
@@ -126,6 +130,7 @@
   }
 
   function hud() {
+    ctx.save(); ctx.translate(0, oy);
     ctx.fillStyle = '#fff'; ctx.font = 'bold 30px sans-serif'; ctx.textAlign = 'left';
     ctx.fillText(Math.round(shown), 16, 38);
     ctx.fillStyle = '#c9bdf2'; ctx.font = '12px sans-serif';
@@ -136,9 +141,10 @@
     var n = Tiers.length, sx = (right - left) / n;
     for (var i = 0; i < n; i++) {
       ctx.globalAlpha = i <= maxTier ? 1 : 0.3;
-      drawTier(ctx, i, left + sx * (i + 0.5), bottom + 26, Math.min(sx * 0.42, 6 + i * 0.9), 0, false);
+      drawTier(ctx, i, left + sx * (i + 0.5), bottom + 26 - oy, Math.min(sx * 0.42, 6 + i * 0.9), 0, false);
     }
     ctx.globalAlpha = 1;
+    ctx.restore();
   }
 
   function loop(ts) {
@@ -168,7 +174,7 @@
     $('start').classList.add('hidden'); $('over').classList.add('hidden');
   }
 
-  function aim(e) { aimX = (e.clientX) / S; }
+  function aim(e) { aimX = e.clientX / S - ox; }
   cv.addEventListener('pointerdown', function (e) { aim(e); });
   cv.addEventListener('pointermove', function (e) { aim(e); });
   cv.addEventListener('pointerup', function (e) { aim(e); drop(); });
