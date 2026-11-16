@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>ほしドロップ</title>
+<link rel="stylesheet" href="../shared/hoshi.css">
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="start" class="overlay">
+  <p class="title">ほしドロップ</p>
+  <canvas id="chart" width="320" height="80"></canvas>
+  <p class="lead" id="howto"></p>
+  <button class="btn" id="play"></button>
+  <p class="lead" id="bestLabel"></p>
+</div>
+
+<div id="over" class="overlay hidden">
+  <p class="lead" id="overTitle"></p>
+  <p class="big" id="final">0</p>
+  <p class="lead" id="overBest"></p>
+  <button class="btn" id="again"></button>
+  <button class="btn sub" id="share"></button>
+  <div class="promo-head" id="promoHead"></div>
+  <div class="promo" id="promo"></div>
+</div>
+
+<script src="../shared/matter.min.js"></script>
+<script src="../shared/hoshi.js"></script>
+<script src="draw.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

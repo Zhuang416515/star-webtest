@@ -1,0 +1,16 @@
+[
+  {
+    "id": "hoshiuranai",
+    "name": { "ja": "星占い", "zh": "星占" },
+    "desc": { "ja": "毎日の12星座占い＆おみくじ", "zh": "每日星座运势和抽签" },
+    "icon": "icons/hoshiuranai.png",
+    "url": "https://miniapp.line.me/2012616308-afvj7xfX"
+  },
+  {
+    "id": "hoshidrop",
+    "name": { "ja": "ほしドロップ", "zh": "星星合成" },
+    "desc": { "ja": "同じ星をくっつけて銀河をつくろう", "zh": "合成相同的星星，造出银河" },
+    "icon": "icons/hoshidrop.png",
+    "url": "https://zhuang416515.github.io/star-webtest/g/dev/hoshidrop/"
+  }
+]
