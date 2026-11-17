@@ -24,10 +24,8 @@
 </div>
 <script>
   var canvas = document.querySelector("#unity-canvas");
-  var zh = /^zh/i.test(navigator.language || "");
-  var tips = zh
-    ? ["正在收集星星…", "正在读取今日运势…", "星灵正在打扮中…", "正在准备神签…"]
-    : ["星をあつめています…", "今日の運勢をよみこみ中…", "星霊がおめかし中…", "おみくじを準備しています…"];
+  // 加载提示固定日文（面向日本）
+  var tips = ["星をあつめています…", "今日の運勢をよみこみ中…", "星霊がおめかし中…", "おみくじを準備しています…"];
   var tipEl = document.getElementById("tip"), ti = 0;
   tipEl.textContent = tips[0];
   var tipTimer = setInterval(function () { ti = (ti + 1) % tips.length; tipEl.textContent = tips[ti]; }, 1600);
@@ -54,9 +52,9 @@
   var buildUrl = "Build";
   var config = {
     arguments: [],
-    dataUrl: buildUrl + "/230025855b346d393ae6f777831ae1ff.data.unityweb",
+    dataUrl: buildUrl + "/d9e660285d4e80a853dd386e3b60849f.data.unityweb",
     frameworkUrl: buildUrl + "/1be006eebe30afc5f47a8f7d41d7c409.framework.js.unityweb",
-    codeUrl: buildUrl + "/08d1b01e4d4d45c261c35355114aba00.wasm.unityweb",
+    codeUrl: buildUrl + "/349531e514148fd1f7a2b8686ba699f2.wasm.unityweb",
     streamingAssetsUrl: "StreamingAssets",
     companyName: "DefaultCompany",
     productName: "lineGame",
@@ -64,7 +62,7 @@
   };
 
   var script = document.createElement("script");
-  script.src = buildUrl + "/b89c629d0f1728d12698280fdb9e5e88.loader.js";
+  script.src = buildUrl + "/8231c2b326ef5e5f80f62668b14a31c5.loader.js";
   script.onload = function () {
     createUnityInstance(canvas, config, function (p) { setProgress(p * 0.95); })
       .then(function () { setProgress(1); setTimeout(done, 350); })
