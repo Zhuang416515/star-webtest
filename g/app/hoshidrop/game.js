@@ -14,13 +14,13 @@
     cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px';
     S = Math.min(innerWidth / W, innerHeight / (W * 1.5)); ox = (innerWidth / S - W) / 2; H = innerHeight / S;
     var hud = 78 / S; // HUD の高さ
-    bottom = H - 50; top = Math.max(hud + 76, bottom - 520);
+    bottom = H - 50; top = Math.max(hud + 76, bottom - 470); // 瓶子稍矮：乱投 2~4 分钟会满
     dangerY = top + 6; dropY = top - 40;
     stars = [];
     for (var i = 0; i < 40; i++) stars.push({ x: Math.random() * innerWidth / S, y: Math.random() * H * 0.7, s: 0.6 + Math.random() * 1.6, p: Math.random() * 7 });
   }
 
-  function pick() { var r = Math.random(); return r < 0.32 ? 0 : r < 0.6 ? 1 : r < 0.8 ? 2 : r < 0.93 ? 3 : 4; }
+  function pick() { var r = Math.random(); return r < 0.25 ? 0 : r < 0.5 ? 1 : r < 0.72 ? 2 : r < 0.88 ? 3 : 4; }
 
   G.clear = function () { balls = null; Fx.list = []; };
   G.reset = function () {

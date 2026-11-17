@@ -1,7 +1,8 @@
 // 星シリーズ共通 SDK：LINE(LIFF) 初期化・分享・存储・互推栏・音效
 (function () {
   var H = {};
-  var zh = /^zh/i.test(navigator.language || '');
+  // 面向日本：默认日文；?lang=zh 时才用中文（开发核对用）
+  var zh = /[?&]lang=zh/.test(location.search);
   H.lang = zh ? 'zh' : 'ja';
   H.t = function (o) { return o[H.lang] || o.ja; };
 
