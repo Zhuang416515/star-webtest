@@ -45,6 +45,11 @@ var Fx = {
     }
     this.list.push({ k: 'o', x: x, y: y, r: r, life: 1, c: c });
   },
+  // 連鎖表示は常に 1 つだけ（前のを置き換える）
+  combo: function (x, y, str) {
+    this.list = this.list.filter(function (p) { return !(p.k === 't' && p.big); });
+    this.text(x, y, str, true);
+  },
   text: function (x, y, str, big) { this.list.push({ k: 't', x: x, y: y, str: str, life: 1, big: big }); },
   step: function (dt) {
     this.list.forEach(function (p) {

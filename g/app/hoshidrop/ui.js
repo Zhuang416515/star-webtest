@@ -66,7 +66,7 @@
   function start() {
     click();
     ['title', 'over', 'pause', 'book', 'help'].forEach(function (id) { show(id, false); });
-    show('hud', true);
+    show('hud', true); bestText();
     G.reset(); G.running = true;
     if (!Hoshi.load('hoshidrop.helped', false)) { Hoshi.save('hoshidrop.helped', true); G.running = false; show('help', true); $('help').dataset.resume = '1'; }
   }

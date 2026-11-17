@@ -71,7 +71,7 @@
       G.score += pts;
       Fx.burst(x, y, Tiers[nt].c, Tiers[nt].r);
       Fx.text(x, y - Tiers[nt].r * 0.4, '+' + pts, false);
-      if (G.combo >= 2) Fx.text(x, y - Tiers[nt].r - 18, G.combo + Hoshi.t({ ja: 'れんさ！', zh: '连击！' }), true);
+      if (G.combo >= 2) Fx.combo(x, y - Tiers[nt].r - 18, G.combo + Hoshi.t({ ja: 'れんさ！', zh: '连击！' }), true);
       chime(t, G.combo);
       if (t >= 5) shake = Math.min(14, t + 2);
       if (navigator.vibrate) navigator.vibrate(t >= 6 ? 25 : 10);
@@ -90,6 +90,11 @@
   }
 
   G.aim = function (x) { aimX = x; };
+  // テスト用：盤面の状態
+  G.state = function () {
+    return { cur: cur, cd: cooldown, left: left, right: right, top: top, bottom: bottom, danger: overTimer,
+      balls: (balls || []).map(function (b) { return { t: b.tier, x: b.position.x, y: b.position.y }; }) };
+  };
   G.drop = function () {
     if (!G.running || cooldown > 0) return;
     var r = Tiers[cur].r, x = Math.max(left + r, Math.min(right - r, aimX));
