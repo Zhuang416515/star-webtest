@@ -1,89 +1,73 @@
-// ほしドロップ：11 段階の星の見た目（すべてコードで描画）
+// ほしドロップ：12 星座の段階データと描画・エフェクト
 var Tiers = [
-  { r: 15, c: '#b9a7ff', ja: 'ほしくず', zh: '星尘' },
-  { r: 20, c: '#ffd86b', ja: 'こぼし星', zh: '小星星' },
-  { r: 26, c: '#ff9ecf', ja: 'こんぺいとう', zh: '金平糖' },
-  { r: 33, c: '#7fd1ff', ja: 'ながれぼし', zh: '流星' },
-  { r: 41, c: '#fff1a8', ja: 'みかづき', zh: '新月' },
-  { r: 50, c: '#ffe07a', ja: 'まんげつ', zh: '满月' },
-  { r: 59, c: '#8ff0d0', ja: 'すいせい', zh: '彗星' },
-  { r: 69, c: '#ffb36b', ja: 'わくせい', zh: '行星' },
-  { r: 80, c: '#6aa8ff', ja: 'あおいほし', zh: '蓝星' },
-  { r: 92, c: '#ff7a4a', ja: 'たいよう', zh: '太阳' },
-  { r: 106, c: '#a07bff', ja: 'ぎんが', zh: '银河' }
+  { r: 15, c: '#ffd36b', ja: 'おひつじ座', zh: '白羊座' },
+  { r: 19, c: '#9be08a', ja: 'おうし座', zh: '金牛座' },
+  { r: 24, c: '#ffe27a', ja: 'ふたご座', zh: '双子座' },
+  { r: 29, c: '#ff8f7a', ja: 'かに座', zh: '巨蟹座' },
+  { r: 35, c: '#ffb84d', ja: 'しし座', zh: '狮子座' },
+  { r: 42, c: '#b4e6a0', ja: 'おとめ座', zh: '处女座' },
+  { r: 49, c: '#ff9ecf', ja: 'てんびん座', zh: '天秤座' },
+  { r: 57, c: '#b08cff', ja: 'さそり座', zh: '天蝎座' },
+  { r: 66, c: '#ffc36b', ja: 'いて座', zh: '射手座' },
+  { r: 76, c: '#9fc1ff', ja: 'やぎ座', zh: '摩羯座' },
+  { r: 87, c: '#7fe0ff', ja: 'みずがめ座', zh: '水瓶座' },
+  { r: 100, c: '#c9a3ff', ja: 'うお座', zh: '双鱼座' }
 ];
-var Points = [1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 100];
+var Points = [1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 66, 78];
+var Imgs = Tiers.map(function (t, i) { var im = new Image(); im.src = 'img/z' + i + '.webp'; return im; });
+var IMG_K = 2.26; // 画像サイズ / 物理半径（紋章の円が半径にぴったり合う）
 
-function shade(hex, k) {
-  var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
-  var f = function (v) { return Math.max(0, Math.min(255, Math.round(k > 0 ? v + (255 - v) * k : v * (1 + k)))); };
-  return 'rgb(' + f(r) + ',' + f(g) + ',' + f(b) + ')';
-}
-
-// 在 (x,y) 画第 t 段，半径 r，旋转 a
-function drawTier(ctx, t, x, y, r, a, blink) {
-  var tier = Tiers[t];
-  ctx.save();
-  ctx.translate(x, y);
-  // 光晕
-  if (t >= 9) {
-    var halo = ctx.createRadialGradient(0, 0, r * 0.8, 0, 0, r * 1.35);
-    halo.addColorStop(0, t === 9 ? 'rgba(255,160,80,.45)' : 'rgba(170,130,255,.45)');
-    halo.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(0, 0, r * 1.35, 0, 7); ctx.fill();
-  }
-  ctx.rotate(a);
-  // 行星环（背面）
-  if (t === 7) ring(ctx, r, false);
-  var g = ctx.createRadialGradient(-r * 0.35, -r * 0.4, r * 0.1, 0, 0, r);
-  g.addColorStop(0, shade(tier.c, 0.55)); g.addColorStop(0.7, tier.c); g.addColorStop(1, shade(tier.c, -0.25));
-  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill();
-  ctx.save(); ctx.clip(); deco(ctx, t, r); ctx.restore(); // 装饰不超出圆
-  if (t === 7) ring(ctx, r, true);
-  ctx.rotate(-a);
-  face(ctx, r, blink);
-  // 高光
-  ctx.fillStyle = 'rgba(255,255,255,.55)';
-  ctx.beginPath(); ctx.ellipse(-r * 0.42, -r * 0.48, r * 0.2, r * 0.12, -0.6, 0, 7); ctx.fill();
+function drawTier(ctx, t, x, y, r, a, sc) {
+  var im = Imgs[t], s = r * IMG_K * (sc || 1);
+  ctx.save(); ctx.translate(x, y); ctx.rotate(a || 0);
+  if (im.complete && im.naturalWidth) ctx.drawImage(im, -s / 2, -s / 2, s, s);
+  else { ctx.fillStyle = Tiers[t].c; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill(); }
   ctx.restore();
 }
 
-function ring(ctx, r, front) {
-  ctx.strokeStyle = 'rgba(255,240,200,.9)'; ctx.lineWidth = r * 0.14;
-  ctx.beginPath(); ctx.ellipse(0, 0, r * 1.45, r * 0.38, -0.35, front ? 0 : Math.PI, front ? Math.PI : Math.PI * 2); ctx.stroke();
+function starPath(ctx, x, y, r, rot) {
+  ctx.beginPath();
+  for (var i = 0; i < 10; i++) {
+    var q = rot + i * Math.PI / 5 - Math.PI / 2, d = i % 2 ? r * 0.45 : r;
+    ctx.lineTo(x + Math.cos(q) * d, y + Math.sin(q) * d);
+  }
+  ctx.closePath();
 }
 
-function deco(ctx, t, r) {
-  ctx.fillStyle = 'rgba(255,255,255,.35)';
-  if (t === 2) { // 金平糖：小突起
-    for (var i = 0; i < 8; i++) { var q = i * Math.PI / 4; ctx.beginPath(); ctx.arc(Math.cos(q) * r * 0.78, Math.sin(q) * r * 0.78, r * 0.16, 0, 7); ctx.fill(); }
-  } else if (t === 4) { // 新月：阴影
-    ctx.fillStyle = 'rgba(80,60,150,.35)'; ctx.beginPath(); ctx.arc(r * 0.45, -r * 0.1, r * 0.8, 0, 7); ctx.fill();
-  } else if (t === 5 || t === 8) { // 坑 / 云
-    for (var j = 0; j < 3; j++) { ctx.beginPath(); ctx.arc((j - 1) * r * 0.5, r * (j === 1 ? 0.55 : 0.35), r * 0.13, 0, 7); ctx.fill(); }
-  } else if (t === 6) { // 彗星尾
-    ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.beginPath(); ctx.moveTo(-r * 0.2, -r * 0.9); ctx.lineTo(-r * 0.9, -r * 0.2); ctx.lineTo(-r * 0.4, -r * 0.4); ctx.fill();
-  } else if (t === 9) { // 太阳光芒
-    ctx.strokeStyle = 'rgba(255,230,140,.8)'; ctx.lineWidth = r * 0.08;
-    for (var k = 0; k < 12; k++) { var p = k * Math.PI / 6; ctx.beginPath(); ctx.moveTo(Math.cos(p) * r * 0.8, Math.sin(p) * r * 0.8); ctx.lineTo(Math.cos(p) * r * 0.97, Math.sin(p) * r * 0.97); ctx.stroke(); }
-  } else if (t === 10) { // 银河漩涡
-    ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = r * 0.07;
-    for (var m = 0; m < 2; m++) { ctx.beginPath(); for (var s = 0; s < 30; s++) { var q2 = s * 0.25 + m * Math.PI, d = r * s / 34; ctx.lineTo(Math.cos(q2) * d, Math.sin(q2) * d); } ctx.stroke(); }
+// ---- エフェクト：星の粒・波紋・得点文字 ----
+var Fx = {
+  list: [],
+  burst: function (x, y, c, r) {
+    var n = 8 + Math.round(r / 6);
+    for (var i = 0; i < n; i++) {
+      var a = Math.random() * 7, v = 1.5 + Math.random() * 3 + r / 40;
+      this.list.push({ k: 's', x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.5, life: 1, c: Math.random() < 0.4 ? '#fff6c0' : c, s: 3 + Math.random() * 4, rot: Math.random() * 6 });
+    }
+    this.list.push({ k: 'o', x: x, y: y, r: r, life: 1, c: c });
+  },
+  text: function (x, y, str, big) { this.list.push({ k: 't', x: x, y: y, str: str, life: 1, big: big }); },
+  step: function (dt) {
+    this.list.forEach(function (p) {
+      p.life -= dt * (p.k === 't' ? 1.1 : 1.6);
+      if (p.k === 's') { p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.vx *= 0.98; p.rot += 0.1; }
+      if (p.k === 't') p.y -= dt * 40;
+    });
+    this.list = this.list.filter(function (p) { return p.life > 0; });
+  },
+  draw: function (ctx) {
+    this.list.forEach(function (p) {
+      ctx.globalAlpha = Math.min(1, p.life * 1.5);
+      if (p.k === 's') { ctx.fillStyle = p.c; starPath(ctx, p.x, p.y, p.s, p.rot); ctx.fill(); }
+      else if (p.k === 'o') {
+        ctx.strokeStyle = p.c; ctx.lineWidth = 6 * p.life;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (1.6 - p.life * 0.6), 0, 7); ctx.stroke();
+      } else {
+        var f = p.big ? 30 : 20, pop = 1 + Math.max(0, p.life - 0.8) * 2;
+        ctx.font = '800 ' + Math.round(f * pop) + 'px "M PLUS Rounded 1c", "Noto Sans SC", sans-serif'; ctx.textAlign = 'center';
+        ctx.lineWidth = 6; ctx.strokeStyle = '#4a2a7a'; ctx.lineJoin = 'round'; ctx.strokeText(p.str, p.x, p.y);
+        ctx.fillStyle = p.big ? '#ffd25e' : '#fff'; ctx.fillText(p.str, p.x, p.y);
+      }
+    });
+    ctx.globalAlpha = 1;
   }
-}
-
-function face(ctx, r, blink) {
-  var ey = -r * 0.02, ex = r * 0.3, es = Math.max(2, r * 0.11);
-  ctx.fillStyle = '#3b2a5c';
-  if (blink) {
-    ctx.fillRect(-ex - es, ey, es * 2, es * 0.4); ctx.fillRect(ex - es, ey, es * 2, es * 0.4);
-  } else {
-    ctx.beginPath(); ctx.arc(-ex, ey, es, 0, 7); ctx.arc(ex, ey, es, 0, 7); ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(-ex + es * 0.35, ey - es * 0.35, es * 0.35, 0, 7); ctx.arc(ex + es * 0.35, ey - es * 0.35, es * 0.35, 0, 7); ctx.fill();
-  }
-  ctx.strokeStyle = '#3b2a5c'; ctx.lineWidth = Math.max(1.2, r * 0.05);
-  ctx.beginPath(); ctx.arc(0, r * 0.12, r * 0.13, 0.2, Math.PI - 0.2); ctx.stroke();
-  ctx.fillStyle = 'rgba(255,120,160,.45)';
-  ctx.beginPath(); ctx.ellipse(-r * 0.5, r * 0.18, r * 0.14, r * 0.08, 0, 0, 7); ctx.ellipse(r * 0.5, r * 0.18, r * 0.14, r * 0.08, 0, 0, 7); ctx.fill();
-}
+};

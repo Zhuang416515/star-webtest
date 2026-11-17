@@ -1,53 +1,55 @@
-// ほしドロップ：同じ星がくっつくと大きくなる落下合成ゲーム
+// ほしドロップ：物理・ルール・描画（画面遷移は ui.js）
 (function () {
   var M = Matter, W = 360;
-  var T = {
-    howto: { ja: 'タップした場所に星を落とそう。\n同じ星がくっつくと1つ大きくなるよ。\nあふれたらおしまい！', zh: '点击的位置会落下星星。\n相同的星星碰在一起会变大。\n溢出线外就结束！' },
-    play: { ja: 'あそぶ', zh: '开始' }, best: { ja: 'ベスト', zh: '最高' }, next: { ja: 'つぎ', zh: '下一个' },
-    over: { ja: 'あふれちゃった！', zh: '溢出来了！' }, again: { ja: 'もう一回', zh: '再来一次' },
-    share: { ja: '友だちに自慢する', zh: '分享给好友' }, more: { ja: '他のゲームもあそぶ', zh: '其他游戏' },
-    record: { ja: '自己ベスト更新！', zh: '刷新最高分！' },
-    shareText: { ja: 'ほしドロップで {0}点！「{1}」まで育てたよ。この記録、超えられる？', zh: '我在ほしドロップ拿了 {0} 分！合成到了「{1}」，你能超过吗？' }
-  };
   var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
-  var $ = function (id) { return document.getElementById(id); };
-  var S, H, dpr, ox = 0, oy = 0, left = 12, right = W - 12, top, bottom, dropY, dangerY;
-  var engine, balls, parts, score, shown, best = Hoshi.load('hoshidrop.best', 0), maxTier;
-  var cur, next, aimX = W / 2, cooldown = 0, overTimer = 0, running = false, shake = 0, last = 0, acc = 0, queue = [];
-
-  function fmt(s, a, b) { return s.replace('{0}', a).replace('{1}', b); }
+  var S, H, dpr, ox, left = 14, right = W - 14, top, bottom, dropY, dangerY;
+  var engine, balls, queue, cur, next, aimX = W / 2, cooldown, overTimer, shake = 0, last = 0, acc = 0;
+  var stars = [];
+  var G = window.Game = { running: false, score: 0, maxTier: 0, combo: 0, seen: Hoshi.load('hoshidrop.seen', []) };
+  var comboT = 0;
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
     cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px';
-    // 宽屏时保持竖屏比例并居中；瓶子高度有上限，多出的空间留在上方
-    S = Math.min(innerWidth / W, innerHeight / (W * 1.55)); ox = (innerWidth / S - W) / 2; H = innerHeight / S;
-    bottom = H - 52; top = Math.max(130, bottom - 480); oy = top - 130;
-    dangerY = top + 10; dropY = top - 26;
+    S = Math.min(innerWidth / W, innerHeight / (W * 1.5)); ox = (innerWidth / S - W) / 2; H = innerHeight / S;
+    var hud = 78 / S; // HUD の高さ
+    bottom = H - 50; top = Math.max(hud + 76, bottom - 520);
+    dangerY = top + 6; dropY = top - 40;
+    stars = [];
+    for (var i = 0; i < 40; i++) stars.push({ x: Math.random() * innerWidth / S, y: Math.random() * H * 0.7, s: 0.6 + Math.random() * 1.6, p: Math.random() * 7 });
   }
 
-  function pick() { var r = Math.random(); return r < 0.3 ? 0 : r < 0.58 ? 1 : r < 0.8 ? 2 : r < 0.92 ? 3 : 4; }
+  function pick() { var r = Math.random(); return r < 0.32 ? 0 : r < 0.6 ? 1 : r < 0.8 ? 2 : r < 0.93 ? 3 : 4; }
 
-  function reset() {
+  G.clear = function () { balls = null; Fx.list = []; };
+  G.reset = function () {
     engine = M.Engine.create(); engine.gravity.y = 1.3;
     var o = { isStatic: true, friction: 0.2 };
     M.Composite.add(engine.world, [
       M.Bodies.rectangle(W / 2, bottom + 30, W, 60, o),
-      M.Bodies.rectangle(left - 30, H / 2, 60, H * 2, o),
-      M.Bodies.rectangle(right + 30, H / 2, 60, H * 2, o)
+      M.Bodies.rectangle(left - 30, H / 2, 60, H * 3, o),
+      M.Bodies.rectangle(right + 30, H / 2, 60, H * 3, o)
     ]);
     M.Events.on(engine, 'collisionStart', collide);
     M.Events.on(engine, 'collisionActive', collide);
-    balls = []; parts = []; queue = []; score = 0; shown = 0; maxTier = 0; overTimer = 0;
-    cur = pick(); next = pick();
+    balls = []; queue = []; Fx.list = [];
+    G.score = 0; G.maxTier = 0; G.combo = 0; overTimer = 0; cooldown = 0;
+    cur = pick(); next = pick(); see(cur); see(next);
+    G.emit('score'); G.emit('next', next);
+  };
+
+  G.emit = function () {}; // ui.js が上書き
+  function see(t) {
+    if (G.seen[t]) return false;
+    G.seen[t] = 1; Hoshi.save('hoshidrop.seen', G.seen); return true;
   }
 
-  function addBall(t, x, y) {
-    var b = M.Bodies.circle(x, y, Tiers[t].r, { restitution: 0.15, friction: 0.06, density: 0.0012 });
-    b.tier = t; b.born = performance.now(); b.seed = Math.random() * 3000;
+  function addBall(t, x, y, merged) {
+    var b = M.Bodies.circle(x, y, Tiers[t].r, { restitution: 0.12, friction: 0.08, density: 0.0012 });
+    b.tier = t; b.born = performance.now(); b.merged = merged; b.seed = Math.random() * 9;
     M.Composite.add(engine.world, b); balls.push(b);
-    if (t > maxTier) maxTier = t;
+    if (t > G.maxTier) G.maxTier = t;
     return b;
   }
 
@@ -64,137 +66,124 @@
       var a = q[0], b = q[1], t = a.tier, x = (a.position.x + b.position.x) / 2, y = (a.position.y + b.position.y) / 2;
       M.Composite.remove(engine.world, a); M.Composite.remove(engine.world, b);
       balls = balls.filter(function (z) { return z !== a && z !== b; });
-      score += Points[t + 1] || Points[10];
-      burst(x, y, Tiers[Math.min(t + 1, 10)].c, 10 + t * 2);
-      Hoshi.tone(380 + t * 70, 0.18, 'triangle', 0.12);
-      if (t >= 5) shake = Math.min(12, t);
-      if (t < 10) addBall(t + 1, x, y); else score += 200; // 银河相遇：消失 + 大奖
+      G.combo = comboT > 0 ? G.combo + 1 : 1; comboT = 0.9;
+      var nt = Math.min(t + 1, 11), pts = (t < 11 ? Points[nt] : 500) * Math.min(G.combo, 5);
+      G.score += pts;
+      Fx.burst(x, y, Tiers[nt].c, Tiers[nt].r);
+      Fx.text(x, y - Tiers[nt].r * 0.4, '+' + pts, false);
+      if (G.combo >= 2) Fx.text(x, y - Tiers[nt].r - 18, G.combo + Hoshi.t({ ja: 'れんさ！', zh: '连击！' }), true);
+      chime(t, G.combo);
+      if (t >= 5) shake = Math.min(14, t + 2);
+      if (navigator.vibrate) navigator.vibrate(t >= 6 ? 25 : 10);
+      if (t < 11) { addBall(nt, x, y, true); if (see(nt)) G.emit('new', nt); }
+      G.emit('score');
     });
     queue = [];
   }
 
-  function burst(x, y, c, n) {
-    for (var i = 0; i < n; i++) {
-      var a = Math.random() * 7, v = 1 + Math.random() * 3.5;
-      parts.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, life: 1, c: c });
-    }
+  // ド・レ・ミ・ソ・ラ…の音階で、大きくなるほど高く
+  var scale = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24, 26];
+  function chime(t, c) {
+    var f = 440 * Math.pow(2, (scale[t] + Math.min(c - 1, 4) * 2) / 12);
+    Hoshi.tone(f, 0.22, 'triangle', 0.13);
+    setTimeout(function () { Hoshi.tone(f * 1.5, 0.18, 'sine', 0.07); }, 60);
   }
 
-  function drop() {
-    if (!running || cooldown > 0) return;
+  G.aim = function (x) { aimX = x; };
+  G.drop = function () {
+    if (!G.running || cooldown > 0) return;
     var r = Tiers[cur].r, x = Math.max(left + r, Math.min(right - r, aimX));
     addBall(cur, x, dropY);
-    Hoshi.tone(260, 0.1, 'sine', 0.1);
-    cur = next; next = pick(); cooldown = 0.45;
-  }
+    Hoshi.tone(330, 0.08, 'sine', 0.1);
+    cur = next; next = pick(); see(next); cooldown = 0.5;
+    G.emit('next', next);
+  };
 
   function step(dt) {
-    cooldown = Math.max(0, cooldown - dt);
+    cooldown = Math.max(0, cooldown - dt); comboT = Math.max(0, comboT - dt);
     var danger = false, now = performance.now();
     balls.forEach(function (b) { if (now - b.born > 1200 && b.position.y - Tiers[b.tier].r < dangerY) danger = true; });
     overTimer = danger ? overTimer + dt : 0;
-    if (overTimer > 2) gameOver();
-    parts.forEach(function (p) { p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life -= dt * 1.6; });
-    parts = parts.filter(function (p) { return p.life > 0; });
-    shown += (score - shown) * Math.min(1, dt * 10);
-    shake *= 0.85;
+    if (overTimer > 2) { G.running = false; G.emit('over'); }
   }
 
-  function render() {
+  function bg(now) {
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i]; ctx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(now / 900 + s.p));
+      ctx.fillStyle = '#fff6d8'; starPath(ctx, s.x, s.y, s.s * 2, 0); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function jar(now) {
+    var w = right - left, rr = 26;
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(left, top - 4); ctx.lineTo(left, bottom - rr); ctx.quadraticCurveTo(left, bottom, left + rr, bottom);
+    ctx.lineTo(right - rr, bottom); ctx.quadraticCurveTo(right, bottom, right, bottom - rr); ctx.lineTo(right, top - 4);
+    var g = ctx.createLinearGradient(0, top, 0, bottom);
+    g.addColorStop(0, 'rgba(255,255,255,.10)'); g.addColorStop(1, 'rgba(255,220,240,.30)');
+    ctx.fillStyle = g; ctx.fill();
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.strokeStyle = '#4a2a7a'; ctx.lineWidth = 10; ctx.stroke();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 5; ctx.stroke();
+    // ガラスの光
+    ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.moveTo(left + 14, top + 30); ctx.lineTo(left + 14, top + 120); ctx.stroke();
+    ctx.restore();
+    // あふれライン
+    var hot = overTimer > 0, blink = hot && Math.floor(now / 140) % 2;
+    ctx.strokeStyle = blink ? '#ff3d7f' : hot ? '#ffd25e' : 'rgba(255,255,255,.45)'; ctx.lineWidth = 3;
+    ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.moveTo(left + 6, dangerY); ctx.lineTo(right - 6, dangerY); ctx.stroke(); ctx.setLineDash([]);
+    // 進化の輪（下）
+    var n = Tiers.length, sx = w / n;
+    for (var i = 0; i < n; i++) {
+      ctx.globalAlpha = G.seen[i] ? 1 : 0.25;
+      drawTier(ctx, i, left + sx * (i + 0.5), bottom + 26, Math.min(sx * 0.42, 7 + i * 0.6), 0);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function render(now) {
     ctx.setTransform(dpr * S, 0, 0, dpr * S, 0, 0);
     ctx.clearRect(0, 0, innerWidth / S, H);
+    bg(now);
     ctx.translate(ox, 0);
     ctx.save();
     if (shake > 0.3) ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
-    // 瓶子
-    ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fillRect(left, top, right - left, bottom - top);
-    ctx.strokeStyle = 'rgba(255,216,119,.7)'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(left, top); ctx.lineTo(left, bottom); ctx.lineTo(right, bottom); ctx.lineTo(right, top); ctx.stroke();
-    // 危险线
-    ctx.strokeStyle = overTimer > 0 && Math.floor(performance.now() / 150) % 2 ? '#ff5577' : 'rgba(255,120,160,.35)';
-    ctx.setLineDash([8, 6]); ctx.beginPath(); ctx.moveTo(left, dangerY); ctx.lineTo(right, dangerY); ctx.stroke(); ctx.setLineDash([]);
-    // 瞄准线 + 手上的星
-    if (running) {
+    if (balls) jar(now);
+    if (G.running && balls) {
       var r = Tiers[cur].r, x = Math.max(left + r, Math.min(right - r, aimX));
-      ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.moveTo(x, dropY); ctx.lineTo(x, bottom); ctx.stroke();
-      if (cooldown <= 0) drawTier(ctx, cur, x, dropY, r, 0, false);
+      ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.setLineDash([3, 7]);
+      ctx.beginPath(); ctx.moveTo(x, dropY + r); ctx.lineTo(x, bottom); ctx.stroke(); ctx.setLineDash([]);
+      var k = cooldown > 0 ? 1 - cooldown / 0.5 : 1; // 次の星がポンと出る
+      drawTier(ctx, cur, x, dropY + Math.sin(now / 300) * 2, r, 0, k < 1 ? k * k : 1);
     }
-    var now = performance.now();
-    balls.forEach(function (b) {
-      drawTier(ctx, b.tier, b.position.x, b.position.y, Tiers[b.tier].r, b.angle, (now + b.seed) % 3200 < 130);
+    (balls || []).forEach(function (b) {
+      var p = (now - b.born) / 320, sc = 1;
+      if (b.merged && p < 1) sc = 1 + 0.35 * Math.sin(p * Math.PI) * (1 - p * 0.5) - (p < 0.15 ? 0.3 * (1 - p / 0.15) : 0);
+      drawTier(ctx, b.tier, b.position.x, b.position.y, Tiers[b.tier].r, b.angle, sc);
     });
-    parts.forEach(function (p) { ctx.globalAlpha = Math.max(0, p.life); ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 2.5, 0, 7); ctx.fill(); });
-    ctx.globalAlpha = 1;
-    ctx.restore();
-    hud();
-  }
-
-  function hud() {
-    ctx.save(); ctx.translate(0, oy);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 30px sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText(Math.round(shown), 16, 38);
-    ctx.fillStyle = '#c9bdf2'; ctx.font = '12px sans-serif';
-    ctx.fillText(Hoshi.t(T.best) + " " + best, 16, 56);
-    ctx.textAlign = 'right'; ctx.fillText(Hoshi.t(T.next), W - 62, 30);
-    drawTier(ctx, next, W - 34, 36, 18, 0, false);
-    // 进化表
-    var n = Tiers.length, sx = (right - left) / n;
-    for (var i = 0; i < n; i++) {
-      ctx.globalAlpha = i <= maxTier ? 1 : 0.3;
-      drawTier(ctx, i, left + sx * (i + 0.5), bottom + 26 - oy, Math.min(sx * 0.42, 6 + i * 0.9), 0, false);
-    }
-    ctx.globalAlpha = 1;
+    Fx.draw(ctx);
     ctx.restore();
   }
 
   function loop(ts) {
     var dt = Math.min(0.05, (ts - (last || ts)) / 1000); last = ts;
-    if (running) {
+    if (G.running) {
       acc += dt;
       while (acc >= 1 / 60) { M.Engine.update(engine, 1000 / 60); merge(); acc -= 1 / 60; }
       step(dt);
-    }
-    render();
+    } else acc = 0;
+    Fx.step(dt); shake *= 0.85;
+    render(ts);
     requestAnimationFrame(loop);
   }
 
-  function gameOver() {
-    running = false;
-    var rec = score > best;
-    if (rec) { best = score; Hoshi.save('hoshidrop.best', best); }
-    Hoshi.tone(200, 0.5, 'sawtooth', 0.08);
-    $('final').textContent = score;
-    $('overBest').textContent = rec ? Hoshi.t(T.record) : Hoshi.t(T.best) + ' ' + best;
-    $('over').classList.remove('hidden');
-    Hoshi.promo($('promo'), 'hoshidrop');
-  }
-
-  function start() {
-    reset(); running = true;
-    $('start').classList.add('hidden'); $('over').classList.add('hidden');
-  }
-
   function aim(e) { aimX = e.clientX / S - ox; }
-  cv.addEventListener('pointerdown', function (e) { aim(e); });
-  cv.addEventListener('pointermove', function (e) { aim(e); });
-  cv.addEventListener('pointerup', function (e) { aim(e); drop(); });
-
-  // 文案
-  $('howto').innerText = Hoshi.t(T.howto);
-  $('play').textContent = Hoshi.t(T.play);
-  $('bestLabel').textContent = best > 0 ? Hoshi.t(T.best) + ' ' + best : '';
-  $('overTitle').textContent = Hoshi.t(T.over);
-  $('again').textContent = Hoshi.t(T.again);
-  $('share').textContent = Hoshi.t(T.share);
-  $('promoHead').textContent = Hoshi.t(T.more);
-  $('play').onclick = start; $('again').onclick = start;
-  $('share').onclick = function () { Hoshi.share(fmt(Hoshi.t(T.shareText), score, Hoshi.t(Tiers[maxTier]))); };
-
-  // 标题画面的进化表
-  var cc = $('chart').getContext('2d');
-  for (var i = 0; i < Tiers.length; i++) drawTier(cc, i, 16 + i * 28.8, 40, 7 + i * 0.75, 0, false);
+  cv.addEventListener('pointerdown', aim);
+  cv.addEventListener('pointermove', aim);
+  cv.addEventListener('pointerup', function (e) { aim(e); G.drop(); });
 
   resize(); addEventListener('resize', resize);
-  reset(); requestAnimationFrame(loop);
-  Hoshi.init(window.LIFF_IDS);
+  requestAnimationFrame(loop);
 })();

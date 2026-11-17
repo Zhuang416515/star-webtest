@@ -1,0 +1,102 @@
+/* ほしドロップ 画面スタイル */
+:root { --ink: #4a2a7a; --pink: #ff6fae; --pink-d: #d9478a; --gold: #ffd25e; --gold-d: #e09a1c; --mint: #5fd6b8; --mint-d: #2fa58a; --card: #fff8fd; }
+html, body { background: linear-gradient(180deg, #2a1b66 0%, #5a3aa8 45%, #c97fc8 80%, #ffb7c9 100%); font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", sans-serif; }
+#sky { position: fixed; inset: 0; pointer-events: none; }
+#cv { position: fixed; inset: 0; }
+.hide { display: none !important; }
+
+/* 文字の縁取り */
+.outline { color: #fff; paint-order: stroke fill; -webkit-text-stroke: 6px var(--ink); text-shadow: 0 4px 0 var(--ink); }
+
+/* ---- HUD ---- */
+#hud { position: fixed; left: 0; right: 0; top: 0; padding: calc(8px + env(safe-area-inset-top)) 10px 0; display: flex; align-items: center; gap: 8px; pointer-events: none; }
+#hud > * { pointer-events: auto; }
+.pill { background: rgba(255,255,255,.92); border-radius: 22px; box-shadow: 0 3px 0 rgba(74,42,122,.35); color: var(--ink); display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px 0 6px; }
+.pill img { width: 34px; height: 34px; }
+.score { font-size: 24px; font-weight: 800; min-width: 64px; }
+.best { font-size: 13px; font-weight: 800; height: 32px; padding-right: 10px; }
+.best img { width: 24px; height: 24px; }
+.grow { flex: 1; }
+.next { flex-direction: column; justify-content: center; gap: 0; width: 58px; height: 58px; padding: 0; border-radius: 50%; }
+.next small { font-size: 10px; font-weight: 800; margin-top: -2px; }
+.next img { width: 36px; height: 36px; }
+.round { width: 44px; height: 44px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 3px 0 rgba(74,42,122,.35); display: grid; place-items: center; cursor: pointer; }
+.round svg { width: 22px; height: 22px; fill: var(--ink); }
+.round:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(74,42,122,.35); }
+
+/* ---- ボタン ---- */
+.b { border: 0; border-radius: 999px; font-family: inherit; font-weight: 800; color: #fff; cursor: pointer; font-size: 20px; padding: 14px 0; width: 240px;
+  background: linear-gradient(180deg, #ff9cc8, var(--pink)); box-shadow: 0 6px 0 var(--pink-d), 0 10px 18px rgba(80,20,80,.25); text-shadow: 0 2px 0 rgba(150,30,90,.4); }
+.b:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--pink-d); }
+.b.gold { background: linear-gradient(180deg, #ffe58f, var(--gold)); box-shadow: 0 6px 0 var(--gold-d), 0 10px 18px rgba(80,40,0,.25); color: #7a4300; text-shadow: none; }
+.b.mint { background: linear-gradient(180deg, #8ff0d8, var(--mint)); box-shadow: 0 6px 0 var(--mint-d), 0 10px 18px rgba(0,60,50,.25); text-shadow: 0 2px 0 rgba(0,90,70,.35); }
+.b.small { width: auto; padding: 10px 22px; font-size: 16px; }
+.b.big { font-size: 26px; padding: 16px 0; width: 260px; animation: breathe 1.6s infinite ease-in-out; }
+@keyframes breathe { 50% { transform: scale(1.05); } }
+
+/* ---- タイトル ---- */
+.screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); }
+#title .logo { font-size: 52px; font-weight: 800; letter-spacing: 1px; line-height: 1; margin: 0; transform: rotate(-4deg); }
+#title .logo span { display: inline-block; animation: wave 2.4s infinite ease-in-out; }
+@keyframes wave { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
+#title .sub { margin: 14px 0 0; font-size: 15px; font-weight: 800; color: #fff; background: rgba(74,42,122,.55); padding: 6px 16px; border-radius: 999px; }
+.stage { position: relative; width: 300px; height: 250px; margin: 6px 0 4px; }
+.stage .mascot { position: absolute; left: 60px; top: 30px; width: 180px; animation: float 2.6s infinite ease-in-out; }
+@keyframes float { 50% { transform: translateY(-14px) rotate(4deg); } }
+.stage .orb { position: absolute; width: 58px; animation: bob 3s infinite ease-in-out; }
+@keyframes bob { 50% { transform: translateY(-8px) rotate(-6deg); } }
+.menu { display: flex; gap: 22px; margin-top: 22px; }
+.menu .round { width: 60px; height: 60px; flex-direction: column; }
+.menu .round svg { width: 26px; height: 26px; }
+.menu label { display: block; font-size: 12px; font-weight: 800; color: #fff; margin-top: 6px; text-shadow: 0 1px 0 var(--ink); }
+.record { margin-top: 18px; display: inline-flex; align-items: center; gap: 6px; font-weight: 800; color: #fff; background: rgba(74,42,122,.55); padding: 6px 16px 6px 8px; border-radius: 999px; }
+.record img { width: 26px; }
+
+/* ---- モーダル ---- */
+.modal { position: fixed; inset: 0; overflow-y: auto; touch-action: pan-y; background: rgba(30,15,70,.6); display: flex; flex-direction: column; align-items: center; padding: 34px 16px 16px; z-index: 10; }
+.modal > .card { margin: auto 0; }
+.card { touch-action: pan-y; position: relative; width: 100%; max-width: 360px; background: var(--card); border-radius: 28px; border: 4px solid #fff;
+  box-shadow: 0 8px 0 rgba(74,42,122,.45), 0 20px 40px rgba(0,0,0,.3); color: var(--ink); padding: 26px 18px 22px; text-align: center; animation: popin .35s cubic-bezier(.2,1.6,.4,1); }
+@keyframes popin { from { transform: scale(.6); opacity: 0; } }
+.card h2 { margin: 0 0 12px; font-size: 26px; font-weight: 800; }
+.card .col { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.ribbon { position: absolute; left: 50%; top: -22px; transform: translateX(-50%); background: linear-gradient(180deg, #ff9cc8, var(--pink)); color: #fff; font-weight: 800; font-size: 18px; padding: 6px 26px; border-radius: 12px; box-shadow: 0 4px 0 var(--pink-d); white-space: nowrap; }
+.x { position: absolute; right: 10px; top: 10px; width: 38px; height: 38px; background: #f2e8ff; color: var(--ink); font-size: 18px; font-weight: 800; font-family: inherit; }
+
+/* 図鑑 */
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 6px; }
+.cell { background: #f2e8ff; border-radius: 16px; padding: 8px 4px 6px; font-size: 12px; font-weight: 800; }
+.cell img { width: 100%; max-width: 84px; display: block; margin: 0 auto 4px; }
+.cell.lock img { filter: brightness(0) opacity(.25); }
+.cell.lock { color: #b5a3d6; }
+.cell i { font-style: normal; display: block; font-size: 10px; color: #a58fcf; }
+.progress { font-size: 14px; font-weight: 800; color: #a58fcf; }
+
+/* 遊び方 */
+.steps { display: flex; flex-direction: column; gap: 10px; text-align: left; margin: 4px 0 18px; }
+.steps div { display: flex; align-items: center; gap: 12px; background: #f2e8ff; border-radius: 16px; padding: 10px 12px; font-weight: 800; font-size: 14px; line-height: 1.5; }
+.steps b { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--pink); color: #fff; display: grid; place-items: center; }
+.steps img { width: 44px; flex: none; }
+
+/* 結果 */
+#over .sleepy { width: 130px; margin: -6px auto -6px; display: block; animation: float 2.6s infinite ease-in-out; }
+.final { font-size: 60px; font-weight: 800; line-height: 1.1; color: var(--pink); }
+.newrec { display: inline-block; font-weight: 800; color: #fff; background: linear-gradient(90deg, #ffb44d, #ff6fae); padding: 4px 14px; border-radius: 999px; animation: breathe 1s infinite; }
+.reach { display: flex; align-items: center; justify-content: center; gap: 10px; background: #f2e8ff; border-radius: 16px; padding: 8px; margin: 12px 0 18px; font-weight: 800; }
+.reach img { width: 54px; }
+.reach small { display: block; font-size: 11px; color: #a58fcf; }
+.row { display: flex; gap: 10px; justify-content: center; }
+.promo-head { color: #a58fcf; font-weight: 800; margin-top: 18px; }
+.promo-card { background: #f2e8ff; border: 0; color: var(--ink); }
+.promo-card span { color: #a58fcf; }
+
+/* 新発見バナー */
+#toast { position: fixed; left: 50%; top: calc(80px + env(safe-area-inset-top)); transform: translate(-50%, -160px); transition: transform .45s cubic-bezier(.2,1.5,.4,1); z-index: 5;
+  display: flex; align-items: center; gap: 10px; background: #fff; color: var(--ink); border-radius: 999px; padding: 6px 20px 6px 6px; box-shadow: 0 4px 0 rgba(74,42,122,.4); font-weight: 800; white-space: nowrap; pointer-events: none; }
+#toast.on { transform: translate(-50%, 0); }
+#toast img { width: 50px; }
+#toast em { font-style: normal; color: #fff; background: var(--pink); border-radius: 8px; padding: 2px 8px; margin-right: 4px; font-size: 13px; }
+
+html.zh, html.zh body, html.zh button { font-family: "Noto Sans SC", sans-serif; }
+.cell { position: relative; }
+.cell.lock::after { content: "?"; position: absolute; left: 0; right: 0; top: 18%; font-size: 34px; color: #fff; }
