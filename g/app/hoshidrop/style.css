@@ -67,7 +67,7 @@ html, body { background: linear-gradient(180deg, #2a1b66 0%, #5a3aa8 45%, #c97fc
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 6px; }
 .cell { background: #f2e8ff; border-radius: 16px; padding: 8px 4px 6px; font-size: 12px; font-weight: 800; }
 .cell img { width: 100%; max-width: 84px; display: block; margin: 0 auto 4px; }
-.cell.lock img { filter: brightness(0) opacity(.25); }
+.cell.lock img { filter: brightness(0) opacity(.45) drop-shadow(0 0 2px #b9a2ff); } /* 未发现：剪影 */
 .cell.lock { color: #b5a3d6; }
 .cell i { font-style: normal; display: block; font-size: 10px; color: #a58fcf; }
 .progress { font-size: 14px; font-weight: 800; color: #a58fcf; }
@@ -91,7 +91,7 @@ html, body { background: linear-gradient(180deg, #2a1b66 0%, #5a3aa8 45%, #c97fc
 .promo-card span { color: #a58fcf; }
 
 /* 新発見バナー */
-#toast { position: fixed; left: 50%; top: calc(80px + env(safe-area-inset-top)); transform: translate(-50%, -160px); transition: transform .45s cubic-bezier(.2,1.5,.4,1); z-index: 5;
+#toast { position: fixed; left: 50%; top: auto; bottom: calc(70px + env(safe-area-inset-bottom)); /* 放在下方，不挡住瞄准 */ transform: translate(-50%, 200px); transition: transform .45s cubic-bezier(.2,1.5,.4,1); z-index: 5;
   display: flex; align-items: center; gap: 10px; background: #fff; color: var(--ink); border-radius: 999px; padding: 6px 20px 6px 6px; box-shadow: 0 4px 0 rgba(74,42,122,.4); font-weight: 800; white-space: nowrap; pointer-events: none; }
 #toast.on { transform: translate(-50%, 0); }
 #toast img { width: 50px; }
@@ -99,4 +99,4 @@ html, body { background: linear-gradient(180deg, #2a1b66 0%, #5a3aa8 45%, #c97fc
 
 html.zh, html.zh body, html.zh button { font-family: "Noto Sans SC", sans-serif; }
 .cell { position: relative; }
-.cell.lock::after { content: "?"; position: absolute; left: 0; right: 0; top: 18%; font-size: 34px; color: #fff; }
+.cell.lock::after { content: "?"; position: absolute; left: 0; right: 0; top: 22%; font-size: 24px; color: #fff; opacity: .8; }

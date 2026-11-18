@@ -1,7 +1,7 @@
 [
   {
     "id": "hoshiuranai",
-    "name": { "ja": "星占い", "zh": "星占" },
+    "name": { "ja": "星占い", "zh": "星占い" },
     "desc": { "ja": "毎日の12星座占い＆おみくじ", "zh": "每日星座运势和抽签" },
     "icon": "icons/hoshiuranai.png",
     "url": "https://miniapp.line.me/2012616308-afvj7xfX"

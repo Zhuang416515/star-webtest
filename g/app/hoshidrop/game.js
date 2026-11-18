@@ -143,7 +143,7 @@
     var n = Tiers.length, sx = w / n;
     for (var i = 0; i < n; i++) {
       ctx.globalAlpha = G.seen[i] ? 1 : 0.25;
-      drawTier(ctx, i, left + sx * (i + 0.5), bottom + 26, Math.min(sx * 0.42, 7 + i * 0.6), 0);
+      drawTier(ctx, i, left + sx * (i + 0.5), bottom + 26, sx * 0.44, 0); // 进化条：统一放大，看得清
     }
     ctx.globalAlpha = 1;
   }
