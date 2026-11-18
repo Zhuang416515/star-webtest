@@ -52,9 +52,9 @@
   var buildUrl = "Build";
   var config = {
     arguments: [],
-    dataUrl: buildUrl + "/2864e843618440b96dbf6cea75c26311.data.unityweb",
+    dataUrl: buildUrl + "/d34f30d68c24cd6b9813c3353722130d.data.unityweb",
     frameworkUrl: buildUrl + "/66cc1c09fe3f06c32bc84d979365ec48.framework.js.unityweb",
-    codeUrl: buildUrl + "/1b3f053ee3aa64a94706d9f156b03fe7.wasm.unityweb",
+    codeUrl: buildUrl + "/3c9b9b758e990cb10feb81361a861918.wasm.unityweb",
     streamingAssetsUrl: "StreamingAssets",
     companyName: "DefaultCompany",
     productName: "lineGame",
@@ -62,7 +62,7 @@
   };
 
   var script = document.createElement("script");
-  script.src = buildUrl + "/79340fcc528c4b41bad466f1b53587ad.loader.js";
+  script.src = buildUrl + "/54d5659d0c328884992aace4e4a1d6d6.loader.js";
   script.onload = function () {
     createUnityInstance(canvas, config, function (p) { setProgress(p * 0.95); })
       .then(function () { setProgress(1); setTimeout(done, 350); })
