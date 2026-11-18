@@ -14,6 +14,14 @@
     again: { ja: 'もう一回！', zh: '再来一次！' }, share: { ja: '自慢する', zh: '炫耀一下' }, more: { ja: '星シリーズの他のゲーム', zh: '星系列的其他游戏' },
     best: { ja: 'ベスト', zh: '最高' }, record: { ja: '★ 自己ベスト更新！ ★', zh: '★ 刷新最高分！ ★' },
     found: { ja: 'はっけん！', zh: '发现！' }, prog: { ja: 'あつめた星座 {0} / 12', zh: '已收集 {0} / 12' },
+    skin: { ja: 'きせかえ', zh: '换装' }, lucky: { ja: 'ラッキー星座 {0} 得点×2', zh: '幸运星座 {0} 得分×2' },
+    fortune1: { ja: '星占い1位', zh: '星占い第1' },
+    stamps: { ja: 'ほしスタンプ ★{0}', zh: '星星印章 ★{0}' }, toNext: { ja: '　つぎのきせかえまで あと{0}', zh: '　距下一套换装还差 {0}' },
+    allSkins: { ja: '　きせかえ ぜんぶ解放！', zh: '　换装已全部解锁！' }, back: { ja: 'おかえり！きょうはスタンプ2ばい', zh: '欢迎回来！今天印章双倍' },
+    odai: { ja: 'きょうのおだい {0}/3', zh: '今日任务 {0}/3' }, clear: { ja: 'おだい クリア！ ★+{0}', zh: '任务完成！ ★+{0}' },
+    allClear: { ja: 'ぜんぶクリア！ ★+1', zh: '全部完成！ ★+1' }, left: { ja: 'あと{0}', zh: '还差 {0}' },
+    dayBest: { ja: 'きょうのベスト更新！', zh: '刷新今日最佳！' }, fortune: { ja: '今日の運勢をチェック ☆ 星占い', zh: '查看今日运势 ☆ 星占い' },
+    need: { ja: '★{0}で解放', zh: '★{0} 解锁' }, skinProg: { ja: 'ほしスタンプ ★{0}', zh: '星星印章 ★{0}' },
     shareText: { ja: 'ほしドロップで {0}点！「{1}」まで育てたよ✨ この記録、超えられる？', zh: '我在ほしドロップ拿了 {0} 分！合成到了「{1}」✨ 你能超过吗？' }
   };
   // 中文环境：圆体字库没有简体字，整体换成 Noto Sans SC 粗体，避免字体混排
@@ -37,6 +45,60 @@
     show('record', best > 0);
   }
   bestText();
+
+  // ---- きょうのおだい ----
+  function dailyCard() {
+    Daily.load();
+    var L = Daily.lucky;
+    $('luckyChip').innerHTML = '<img src="img/z' + L + '.webp" alt="">' + fmt(Hoshi.t(T.lucky), Hoshi.t(Tiers[L])) + (Daily.fromFortune ? '<small>' + Hoshi.t(T.fortune1) + '</small>' : '');
+    var h = '';
+    for (var i = 0; i < 3; i++) {
+      var ok = Daily.ok[i], g = Daily.goal(i);
+      h += '<div class="drow' + (ok ? ' ok' : '') + '"><span>' + Daily.text(i) + '</span><b>' + (ok ? '✓' : g > 1 ? Daily.progress(i) + '/' + g : '') + '</b></div>';
+    }
+    $('dailyRows').innerHTML = h;
+    var n = Daily.nextSkin(), line = fmt(Hoshi.t(T.stamps), '<em>' + Daily.stamps + '</em>');
+    line += n < 0 ? Hoshi.t(T.allSkins) : fmt(Hoshi.t(T.toNext), Daily.Skins[n].need - Daily.stamps);
+    if (Daily.back && Daily.doneCount() < 3) line = '<span class="back">' + Hoshi.t(T.back) + '</span>';
+    $('stampLine').innerHTML = line;
+    var seenSkin = Hoshi.load('hoshidrop.skinSeen', 0), unlocked = 0;
+    Daily.Skins.forEach(function (k, i) { if (Daily.unlocked(i)) unlocked = i; });
+    show('skinDot', unlocked > seenSkin);
+  }
+  dailyCard();
+
+  // ---- きせかえ ----
+  function skins() {
+    var h = '';
+    Daily.Skins.forEach(function (k, i) {
+      var on = Daily.unlocked(i);
+      h += '<div class="cell' + (on ? '' : ' locked') + (Daily.skin === i ? ' sel' : '') + '" data-i="' + i + '">' +
+        '<div class="sw" style="background:linear-gradient(180deg,' + k.bg[0] + ',' + k.bg[1] + ');border-color:' + k.jar + (on ? '' : ';opacity:.45') + '"><img src="img/z' + [0, 6, 3, 2, 7, 5, 11][i] + '.webp" alt=""></div>' +
+        Hoshi.t(k) + '<i>' + (on ? '' : fmt(Hoshi.t(T.need), k.need)) + '</i></div>';
+    });
+    $('skinGrid').innerHTML = h;
+    $('skinProg').textContent = fmt(Hoshi.t(T.skinProg), Daily.stamps);
+    $('skinGrid').querySelectorAll('.cell').forEach(function (c) {
+      c.onclick = function () { var i = +c.dataset.i; if (!Daily.unlocked(i)) return; click(); Daily.setSkin(i); skins(); };
+    });
+    var top = 0; Daily.Skins.forEach(function (k, i) { if (Daily.unlocked(i)) top = i; });
+    Hoshi.save('hoshidrop.skinSeen', top); show('skinDot', false);
+    show('skins', true);
+  }
+  $('skinBtn').onclick = function () { click(); skins(); };
+
+  function toastMsg(img, text) {
+    $('toastImg').src = img; $('toastName').textContent = text;
+    $('toast').classList.add('on'); clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { $('toast').classList.remove('on'); }, 2200);
+  }
+  function dailyResult(r) {
+    if (!r.done.length && !r.all) return;
+    var msg = r.done.length ? fmt(Hoshi.t(T.clear), r.done.length * (Daily.back ? 2 : 1)) : '';
+    if (r.all) msg = (msg ? msg + '　' : '') + Hoshi.t(T.allClear);
+    toastMsg('img/star.webp', msg); $('toast').querySelector('em').style.display = 'none';
+    [659, 880, 1319].forEach(function (f, i) { setTimeout(function () { Hoshi.tone(f, 0.18, 'triangle', 0.1); }, i * 80); });
+  }
 
   // ---- サウンド ----
   function soundIcon() { $('soundBtn').innerHTML = '<svg><use href="#i-' + (Hoshi.muted ? 'mute' : 'sound') + '"/></svg>'; }
@@ -77,7 +139,7 @@
   function toTitle() {
     click(); G.running = false; G.clear();
     ['over', 'pause', 'hud'].forEach(function (id) { show(id, false); });
-    bestText(); show('title', true);
+    bestText(); dailyCard(); show('title', true);
   }
   $('play').onclick = start; $('again').onclick = start; $('restart').onclick = start;
   $('toTitle').onclick = toTitle; $('overTitle').onclick = toTitle;
@@ -95,12 +157,11 @@
   var toastTimer;
   G.emit = function (type, v) {
     if (type === 'score') $('score').textContent = G.score;
+    else if (type === 'merge') dailyResult(Daily.on('merge', v));
     else if (type === 'next') $('nextImg').src = 'img/z' + v + '.webp';
     else if (type === 'new') {
-      $('toastImg').src = 'img/z' + v + '.webp';
-      $('toastName').textContent = Hoshi.t(Tiers[v]) + ' ' + Hoshi.t(T.found);
-      $('toast').classList.add('on'); clearTimeout(toastTimer);
-      toastTimer = setTimeout(function () { $('toast').classList.remove('on'); }, 2200);
+      toastMsg('img/z' + v + '.webp', Hoshi.t(Tiers[v]) + ' ' + Hoshi.t(T.found));
+      $('toast').querySelector('em').style.display = '';
       [784, 988, 1175].forEach(function (f, i) { setTimeout(function () { Hoshi.tone(f, 0.2, 'triangle', 0.1); }, i * 90); });
     } else if (type === 'over') over();
   };
@@ -108,18 +169,31 @@
   function over() {
     var gen = G.gen; $('pauseBtn').disabled = true;
     var s = G.score, rec = s > best;
+    var dr = Daily.on('over', { score: s, maxTier: G.maxTier }), dayUp = Daily.dayBest(s);
     if (rec) { best = s; Hoshi.save('hoshidrop.best', best); }
     [523, 440, 349].forEach(function (f, i) { setTimeout(function () { Hoshi.tone(f, 0.3, 'triangle', 0.1); }, i * 160); });
     setTimeout(function () {
       $('pauseBtn').disabled = false;
       if (gen !== G.gen) return; // 已经开了新的一局
       show('hud', false); show('over', true);
-      $('overBest').innerHTML = rec ? '<span class="newrec">' + Hoshi.t(T.record) + '</span>' : Hoshi.t(T.best) + ' ' + best;
+      $('overBest').innerHTML = rec ? '<span class="newrec">' + Hoshi.t(T.record) + '</span>' :
+        dayUp ? '<span class="newrec">' + Hoshi.t(T.dayBest) + '</span>' : Hoshi.t(T.best) + ' ' + best;
+      overDaily(); dailyResult(dr);
       $('reachImg').src = 'img/z' + G.maxTier + '.webp';
       $('reachName').textContent = Hoshi.t(Tiers[G.maxTier]);
       countUp($('final'), s);
       Hoshi.promo($('promo'), 'hoshidrop');
     }, 700);
+  }
+  function overDaily() {
+    var n = Daily.doneCount(), h = fmt(Hoshi.t(T.odai), n) + ' ' + '★★★'.slice(0, n) + '☆☆☆'.slice(0, 3 - n);
+    if (n < 3) { // 离完成最近的一题
+      var bi = -1, bl = 1e9;
+      for (var i = 0; i < 3; i++) if (!Daily.ok[i] && Daily.goal(i) > 1) { var left = Daily.goal(i) - Daily.progress(i); if (left < bl) { bl = left; bi = i; } }
+      if (bi >= 0) h += '<br><small>' + Daily.text(bi) + '　<b class="left">' + fmt(Hoshi.t(T.left), bl) + '</b></small>';
+    } else h += '<button class="b small" id="toFortune">' + Hoshi.t(T.fortune) + '</button>';
+    $('overDaily').innerHTML = h;
+    var b = $('toFortune'); if (b) b.onclick = function () { click(); Hoshi.open('https://miniapp.line.me/2012616308-afvj7xfX'); };
   }
   function countUp(el, to) {
     var t0 = performance.now();

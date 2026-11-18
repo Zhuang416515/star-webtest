@@ -76,16 +76,17 @@
       M.Composite.remove(engine.world, a); M.Composite.remove(engine.world, b);
       balls = balls.filter(function (z) { return z !== a && z !== b; });
       G.combo = comboT > 0 ? G.combo + 1 : 1; comboT = 0.9;
-      var nt = Math.min(t + 1, 11), pts = (t < 11 ? Points[nt] : 500) * Math.min(G.combo, 5);
+      var nt = Math.min(t + 1, 11), lucky = window.Daily && nt === Daily.lucky && t < 11;
+      var pts = (t < 11 ? Points[nt] : 500) * Math.min(G.combo, 5) * (lucky ? 2 : 1); // ラッキー星座は 2 倍
       G.score += pts;
       Fx.burst(x, y, Tiers[nt].c, Tiers[nt].r);
-      Fx.text(x, y - Tiers[nt].r * 0.4, '+' + pts, false);
+      Fx.text(x, y - Tiers[nt].r * 0.4, (lucky ? '★' : '+') + pts, lucky);
       if (G.combo >= 2) Fx.combo(x, y - Tiers[nt].r - 18, G.combo + Hoshi.t({ ja: 'れんさ！', zh: '连击！' }), true);
       chime(t, G.combo);
       if (t >= 5) shake = Math.min(14, t + 2);
       if (navigator.vibrate) navigator.vibrate(t >= 6 ? 25 : 10);
       if (t < 11) addBall(nt, x, y, true);
-      G.emit('score');
+      G.emit('score'); if (t < 11) G.emit('merge', { t: nt, combo: G.combo });
     });
     queue = [];
   }
@@ -125,14 +126,15 @@
   function bg(now) {
     if (balls) { // 游戏中：浅色安静背景，星星只在罐外、淡且慢闪
       var g = ctx.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, '#f3eeff'); g.addColorStop(1, '#ffeaf3');
+      var sk = window.Daily ? Daily.cur() : { bg: ['#f3eeff', '#ffeaf3'], jar: '#5b3f86', star: '#9b7fd6' };
+      g.addColorStop(0, sk.bg[0]); g.addColorStop(1, sk.bg[1]);
       ctx.fillStyle = g; ctx.fillRect(0, 0, innerWidth / S, H);
     }
     for (var i = 0; i < stars.length; i++) {
       var s = stars[i];
       if (balls) {
         if (s.x > left + ox - 12 && s.x < right + ox + 12 && s.y > top - 30) continue;
-        ctx.globalAlpha = 0.18 + 0.07 * Math.sin(now / 2400 + s.p); ctx.fillStyle = '#9b7fd6';
+        ctx.globalAlpha = 0.18 + 0.07 * Math.sin(now / 2400 + s.p); ctx.fillStyle = sk.star;
       } else { ctx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(now / 900 + s.p)); ctx.fillStyle = '#fff6d8'; }
       starPath(ctx, s.x, s.y, s.s * 2, 0); ctx.fill();
     }
@@ -148,7 +150,7 @@
     g.addColorStop(0, 'rgba(255,255,255,.45)'); g.addColorStop(1, 'rgba(255,255,255,.65)');
     ctx.fillStyle = g; ctx.fill();
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    ctx.strokeStyle = '#5b3f86'; ctx.lineWidth = 5; ctx.stroke();
+    ctx.strokeStyle = window.Daily ? Daily.cur().jar : '#5b3f86'; ctx.lineWidth = 5; ctx.stroke();
     // 罐口唇边
     ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(left - 7, top - 4); ctx.lineTo(left + 9, top - 4);
     ctx.moveTo(right - 9, top - 4); ctx.lineTo(right + 7, top - 4); ctx.stroke();
