@@ -8,16 +8,23 @@
   var G = window.Game = { running: false, score: 0, maxTier: 0, combo: 0, seen: Hoshi.load('hoshidrop.seen', []) };
   var comboT = 0;
 
+  var ground = null;
   function resize() {
+    var oldBottom = bottom;
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
     cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px';
-    S = Math.min(innerWidth / W, innerHeight / (W * 1.5)); ox = (innerWidth / S - W) / 2; H = innerHeight / S;
-    var hud = 78 / S; // HUD の高さ
-    bottom = H - 50; top = Math.max(hud + 76, bottom - 470); // 瓶子稍矮：乱投 2~4 分钟会满
+    // 瓶子高度固定（470），所有屏幕玩法一致、分数可比；矮屏整体缩小而不是压扁瓶子
+    S = Math.min(innerWidth / W, (innerHeight - 78) / 596); ox = (innerWidth / S - W) / 2; H = innerHeight / S;
+    bottom = H - 50; top = bottom - 470;
     dangerY = top + 6; dropY = top - 40;
     stars = [];
     for (var i = 0; i < 40; i++) stars.push({ x: Math.random() * innerWidth / S, y: Math.random() * H * 0.7, s: 0.6 + Math.random() * 1.6, p: Math.random() * 7 });
+    if (ground && balls && oldBottom !== undefined && oldBottom !== bottom) {
+      var d = bottom - oldBottom;
+      M.Body.setPosition(ground, { x: W / 2, y: bottom + 30 });
+      balls.forEach(function (b) { M.Body.setPosition(b, { x: b.position.x, y: b.position.y + d }); });
+    }
   }
 
   function pick() { var r = Math.random(); return r < 0.25 ? 0 : r < 0.5 ? 1 : r < 0.72 ? 2 : r < 0.88 ? 3 : 4; }
@@ -26,16 +33,17 @@
   G.reset = function () {
     engine = M.Engine.create(); engine.gravity.y = 1.3;
     var o = { isStatic: true, friction: 0.2 };
+    ground = M.Bodies.rectangle(W / 2, bottom + 30, W, 60, o);
     M.Composite.add(engine.world, [
-      M.Bodies.rectangle(W / 2, bottom + 30, W, 60, o),
+      ground,
       M.Bodies.rectangle(left - 30, H / 2, 60, H * 3, o),
       M.Bodies.rectangle(right + 30, H / 2, 60, H * 3, o)
     ]);
     M.Events.on(engine, 'collisionStart', collide);
     M.Events.on(engine, 'collisionActive', collide);
     balls = []; queue = []; Fx.list = [];
-    G.score = 0; G.maxTier = 0; G.combo = 0; overTimer = 0; cooldown = 0;
-    cur = pick(); next = pick(); see(cur); see(next);
+    G.gen = (G.gen || 0) + 1; G.score = 0; G.maxTier = 0; G.combo = 0; overTimer = 0; cooldown = 0;
+    cur = pick(); next = pick();
     G.emit('score'); G.emit('next', next);
   };
 
@@ -50,6 +58,7 @@
     b.tier = t; b.born = performance.now(); b.merged = merged; b.seed = Math.random() * 9;
     M.Composite.add(engine.world, b); balls.push(b);
     if (t > G.maxTier) G.maxTier = t;
+    if (see(t)) G.emit('new', t);
     return b;
   }
 
@@ -75,7 +84,7 @@
       chime(t, G.combo);
       if (t >= 5) shake = Math.min(14, t + 2);
       if (navigator.vibrate) navigator.vibrate(t >= 6 ? 25 : 10);
-      if (t < 11) { addBall(nt, x, y, true); if (see(nt)) G.emit('new', nt); }
+      if (t < 11) addBall(nt, x, y, true);
       G.emit('score');
     });
     queue = [];
@@ -99,8 +108,9 @@
     if (!G.running || cooldown > 0) return;
     var r = Tiers[cur].r, x = Math.max(left + r, Math.min(right - r, aimX));
     addBall(cur, x, dropY);
+    comboT = 0; // 连锁只算同一次投放引起的合成
     Hoshi.tone(330, 0.08, 'sine', 0.1);
-    cur = next; next = pick(); see(next); cooldown = 0.5;
+    cur = next; next = pick(); cooldown = 0.5;
     G.emit('next', next);
   };
 
@@ -113,9 +123,18 @@
   }
 
   function bg(now) {
+    if (balls) { // 游戏中：浅色安静背景，星星只在罐外、淡且慢闪
+      var g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#f3eeff'); g.addColorStop(1, '#ffeaf3');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, innerWidth / S, H);
+    }
     for (var i = 0; i < stars.length; i++) {
-      var s = stars[i]; ctx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(now / 900 + s.p));
-      ctx.fillStyle = '#fff6d8'; starPath(ctx, s.x, s.y, s.s * 2, 0); ctx.fill();
+      var s = stars[i];
+      if (balls) {
+        if (s.x > left + ox - 12 && s.x < right + ox + 12 && s.y > top - 30) continue;
+        ctx.globalAlpha = 0.18 + 0.07 * Math.sin(now / 2400 + s.p); ctx.fillStyle = '#9b7fd6';
+      } else { ctx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(now / 900 + s.p)); ctx.fillStyle = '#fff6d8'; }
+      starPath(ctx, s.x, s.y, s.s * 2, 0); ctx.fill();
     }
     ctx.globalAlpha = 1;
   }
@@ -126,21 +145,26 @@
     ctx.beginPath(); ctx.moveTo(left, top - 4); ctx.lineTo(left, bottom - rr); ctx.quadraticCurveTo(left, bottom, left + rr, bottom);
     ctx.lineTo(right - rr, bottom); ctx.quadraticCurveTo(right, bottom, right, bottom - rr); ctx.lineTo(right, top - 4);
     var g = ctx.createLinearGradient(0, top, 0, bottom);
-    g.addColorStop(0, 'rgba(255,255,255,.10)'); g.addColorStop(1, 'rgba(255,220,240,.30)');
+    g.addColorStop(0, 'rgba(255,255,255,.45)'); g.addColorStop(1, 'rgba(255,255,255,.65)');
     ctx.fillStyle = g; ctx.fill();
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    ctx.strokeStyle = '#4a2a7a'; ctx.lineWidth = 10; ctx.stroke();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 5; ctx.stroke();
+    ctx.strokeStyle = '#5b3f86'; ctx.lineWidth = 5; ctx.stroke();
+    // 罐口唇边
+    ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(left - 7, top - 4); ctx.lineTo(left + 9, top - 4);
+    ctx.moveTo(right - 9, top - 4); ctx.lineTo(right + 7, top - 4); ctx.stroke();
     // ガラスの光
-    ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 6;
+    ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 6;
     ctx.beginPath(); ctx.moveTo(left + 14, top + 30); ctx.lineTo(left + 14, top + 120); ctx.stroke();
     ctx.restore();
     // あふれライン
     var hot = overTimer > 0, blink = hot && Math.floor(now / 140) % 2;
-    ctx.strokeStyle = blink ? '#ff3d7f' : hot ? '#ffd25e' : 'rgba(255,255,255,.45)'; ctx.lineWidth = 3;
+    ctx.strokeStyle = blink ? '#ff3d7f' : hot ? '#ffb02e' : 'rgba(91,63,134,.18)'; ctx.lineWidth = 3;
     ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.moveTo(left + 6, dangerY); ctx.lineTo(right - 6, dangerY); ctx.stroke(); ctx.setLineDash([]);
     // 進化の輪（下）
     var n = Tiers.length, sx = w / n;
+    ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(left - 4, bottom + 26 - sx * 0.62, w + 8, sx * 1.24, sx * 0.62) : ctx.rect(left - 4, bottom + 26 - sx * 0.62, w + 8, sx * 1.24);
+    ctx.fill();
     for (var i = 0; i < n; i++) {
       ctx.globalAlpha = G.seen[i] ? 1 : 0.25;
       drawTier(ctx, i, left + sx * (i + 0.5), bottom + 26, sx * 0.44, 0); // 进化条：统一放大，看得清
@@ -158,7 +182,7 @@
     if (balls) jar(now);
     if (G.running && balls) {
       var r = Tiers[cur].r, x = Math.max(left + r, Math.min(right - r, aimX));
-      ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.setLineDash([3, 7]);
+      ctx.strokeStyle = 'rgba(91,63,134,.25)'; ctx.lineWidth = 2; ctx.setLineDash([3, 7]);
       ctx.beginPath(); ctx.moveTo(x, dropY + r); ctx.lineTo(x, bottom); ctx.stroke(); ctx.setLineDash([]);
       var k = cooldown > 0 ? 1 - cooldown / 0.5 : 1; // 次の星がポンと出る
       drawTier(ctx, cur, x, dropY + Math.sin(now / 300) * 2, r, 0, k < 1 ? k * k : 1);

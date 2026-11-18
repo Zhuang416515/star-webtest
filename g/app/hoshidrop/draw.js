@@ -1,21 +1,23 @@
 // ほしドロップ：12 星座の段階データと描画・エフェクト
 var Tiers = [
-  { r: 15, c: '#ffd36b', ja: 'おひつじ座', zh: '白羊座' },
-  { r: 19, c: '#9be08a', ja: 'おうし座', zh: '金牛座' },
-  { r: 24, c: '#ffe27a', ja: 'ふたご座', zh: '双子座' },
-  { r: 29, c: '#ff8f7a', ja: 'かに座', zh: '巨蟹座' },
-  { r: 35, c: '#ffb84d', ja: 'しし座', zh: '狮子座' },
-  { r: 42, c: '#b4e6a0', ja: 'おとめ座', zh: '处女座' },
-  { r: 49, c: '#ff9ecf', ja: 'てんびん座', zh: '天秤座' },
-  { r: 57, c: '#b08cff', ja: 'さそり座', zh: '天蝎座' },
-  { r: 66, c: '#ffc36b', ja: 'いて座', zh: '射手座' },
-  { r: 76, c: '#9fc1ff', ja: 'やぎ座', zh: '摩羯座' },
-  { r: 87, c: '#7fe0ff', ja: 'みずがめ座', zh: '水瓶座' },
-  { r: 100, c: '#c9a3ff', ja: 'うお座', zh: '双鱼座' }
+  { r: 15, c: '#FF6B6B', ja: 'おひつじ座', zh: '白羊座' },
+  { r: 19, c: '#7ED957', ja: 'おうし座', zh: '金牛座' },
+  { r: 24, c: '#FFD93D', ja: 'ふたご座', zh: '双子座' },
+  { r: 29, c: '#3ED1C4', ja: 'かに座', zh: '巨蟹座' },
+  { r: 35, c: '#FF9A3C', ja: 'しし座', zh: '狮子座' },
+  { r: 42, c: '#B79CFF', ja: 'おとめ座', zh: '处女座' },
+  { r: 49, c: '#FF9CCB', ja: 'てんびん座', zh: '天秤座' },
+  { r: 57, c: '#4A7BFF', ja: 'さそり座', zh: '天蝎座' },
+  { r: 66, c: '#E0479E', ja: 'いて座', zh: '射手座' },
+  { r: 76, c: '#C9925E', ja: 'やぎ座', zh: '摩羯座' },
+  { r: 87, c: '#5EC8FF', ja: 'みずがめ座', zh: '水瓶座' },
+  { r: 100, c: '#FFC4E6', ja: 'うお座', zh: '双鱼座' }
 ];
 var Points = [1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 66, 78];
-var Imgs = Tiers.map(function (t, i) { var im = new Image(); im.src = 'img/z' + i + '.webp'; return im; });
-var IMG_K = 2.26; // 画像サイズ / 物理半径（紋章の円が半径にぴったり合う）
+// 前 5 级（可能出现在"下一个"）先加载；大的等页面加载完再取，弱网下启动画面更早消失
+var Imgs = Tiers.map(function (t, i) { var im = new Image(); if (i < 5) im.src = 'img/z' + i + '.webp'; return im; });
+window.addEventListener('load', function () { Imgs.forEach(function (im, i) { if (i >= 5) im.src = 'img/z' + i + '.webp'; }); });
+var IMG_K = 3.04; // 画像サイズ / 物理半径（果冻球身体=半径，配件可伸出）
 
 function drawTier(ctx, t, x, y, r, a, sc) {
   var im = Imgs[t], s = r * IMG_K * (sc || 1);

@@ -68,7 +68,11 @@
     ['title', 'over', 'pause', 'book', 'help'].forEach(function (id) { show(id, false); });
     show('hud', true); bestText();
     G.reset(); G.running = true;
-    if (!Hoshi.load('hoshidrop.helped', false)) { Hoshi.save('hoshidrop.helped', true); G.running = false; show('help', true); $('help').dataset.resume = '1'; }
+    if (!Hoshi.load('hoshidrop.helped', false)) {
+      Hoshi.save('hoshidrop.helped', true); G.running = false; show('help', true); $('help').dataset.resume = '1';
+      var ok = $('help').querySelector('[data-close]'); ok.disabled = true; // 防止连点「あそぶ」直接跳过引导
+      setTimeout(function () { ok.disabled = false; }, 700);
+    }
   }
   function toTitle() {
     click(); G.running = false; G.clear();
@@ -77,7 +81,10 @@
   }
   $('play').onclick = start; $('again').onclick = start; $('restart').onclick = start;
   $('toTitle').onclick = toTitle; $('overTitle').onclick = toTitle;
-  $('pauseBtn').onclick = function () { click(); G.running = false; show('pause', true); };
+  function pause() { G.running = false; show('pause', true); }
+  $('pauseBtn').onclick = function () { click(); pause(); };
+  // 切出 LINE / 锁屏时自动暂停
+  document.addEventListener('visibilitychange', function () { if (document.hidden && G.running) pause(); });
   $('resume').onclick = function () { click(); show('pause', false); G.running = true; };
   // 初回の遊び方を閉じたらゲーム再開
   $('help').addEventListener('click', function (e) {
@@ -99,10 +106,13 @@
   };
 
   function over() {
+    var gen = G.gen; $('pauseBtn').disabled = true;
     var s = G.score, rec = s > best;
     if (rec) { best = s; Hoshi.save('hoshidrop.best', best); }
     [523, 440, 349].forEach(function (f, i) { setTimeout(function () { Hoshi.tone(f, 0.3, 'triangle', 0.1); }, i * 160); });
     setTimeout(function () {
+      $('pauseBtn').disabled = false;
+      if (gen !== G.gen) return; // 已经开了新的一局
       show('hud', false); show('over', true);
       $('overBest').innerHTML = rec ? '<span class="newrec">' + Hoshi.t(T.record) + '</span>' : Hoshi.t(T.best) + ' ' + best;
       $('reachImg').src = 'img/z' + G.maxTier + '.webp';

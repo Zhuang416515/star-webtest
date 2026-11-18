@@ -13,10 +13,12 @@ html, body { background: linear-gradient(180deg, #2a1b66 0%, #5a3aa8 45%, #c97fc
 #hud > * { pointer-events: auto; }
 .pill { background: rgba(255,255,255,.92); border-radius: 22px; box-shadow: 0 3px 0 rgba(74,42,122,.35); color: var(--ink); display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px 0 6px; }
 .pill img { width: 34px; height: 34px; }
-.score { font-size: 24px; font-weight: 800; min-width: 64px; }
+.score { font-size: 24px; font-weight: 800; min-width: 64px; font-variant-numeric: tabular-nums; }
 .best { font-size: 13px; font-weight: 800; height: 32px; padding-right: 10px; }
 .best img { width: 24px; height: 24px; }
 .grow { flex: 1; }
+/* 5 位数分数时也不挤压圆按钮 */
+.next, .round { flex: none; }
 .next { flex-direction: column; justify-content: center; gap: 0; width: 58px; height: 58px; padding: 0; border-radius: 50%; }
 .next small { font-size: 10px; font-weight: 800; margin-top: -2px; }
 .next img { width: 36px; height: 36px; }
@@ -30,6 +32,9 @@ html, body { background: linear-gradient(180deg, #2a1b66 0%, #5a3aa8 45%, #c97fc
 .b:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--pink-d); }
 .b.gold { background: linear-gradient(180deg, #ffe58f, var(--gold)); box-shadow: 0 6px 0 var(--gold-d), 0 10px 18px rgba(80,40,0,.25); color: #7a4300; text-shadow: none; }
 .b.mint { background: linear-gradient(180deg, #8ff0d8, var(--mint)); box-shadow: 0 6px 0 var(--mint-d), 0 10px 18px rgba(0,60,50,.25); text-shadow: 0 2px 0 rgba(0,90,70,.35); }
+.b.sub { background: #fff; color: var(--ink); box-shadow: 0 5px 0 #d9cdf0, 0 8px 14px rgba(74,42,122,.15); text-shadow: none; }
+.b.sub:active { box-shadow: 0 1px 0 #d9cdf0; }
+.b.line::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #06c755; margin-right: 6px; vertical-align: 1px; }
 .b.small { width: auto; padding: 10px 22px; font-size: 16px; }
 .b.big { font-size: 26px; padding: 16px 0; width: 260px; animation: breathe 1.6s infinite ease-in-out; }
 @keyframes breathe { 50% { transform: scale(1.05); } }
@@ -91,7 +96,7 @@ html, body { background: linear-gradient(180deg, #2a1b66 0%, #5a3aa8 45%, #c97fc
 .promo-card span { color: #a58fcf; }
 
 /* 新発見バナー */
-#toast { position: fixed; left: 50%; top: auto; bottom: calc(70px + env(safe-area-inset-bottom)); /* 放在下方，不挡住瞄准 */ transform: translate(-50%, 200px); transition: transform .45s cubic-bezier(.2,1.5,.4,1); z-index: 5;
+#toast { position: fixed; left: 50%; top: auto; bottom: calc(2px + env(safe-area-inset-bottom)); /* 盖在进化条上：不挡瞄准，也不挡罐内的球 */ transform: translate(-50%, 200px); transition: transform .45s cubic-bezier(.2,1.5,.4,1); z-index: 5;
   display: flex; align-items: center; gap: 10px; background: #fff; color: var(--ink); border-radius: 999px; padding: 6px 20px 6px 6px; box-shadow: 0 4px 0 rgba(74,42,122,.4); font-weight: 800; white-space: nowrap; pointer-events: none; }
 #toast.on { transform: translate(-50%, 0); }
 #toast img { width: 50px; }
