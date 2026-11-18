@@ -66,6 +66,7 @@
     show('skinDot', unlocked > seenSkin);
   }
   dailyCard();
+  Stats.init('hd');
 
   // ---- きせかえ ----
   function skins() {
@@ -79,7 +80,7 @@
     $('skinGrid').innerHTML = h;
     $('skinProg').textContent = fmt(Hoshi.t(T.skinProg), Daily.stamps);
     $('skinGrid').querySelectorAll('.cell').forEach(function (c) {
-      c.onclick = function () { var i = +c.dataset.i; if (!Daily.unlocked(i)) return; click(); Daily.setSkin(i); skins(); };
+      c.onclick = function () { var i = +c.dataset.i; if (!Daily.unlocked(i)) return; click(); if (Daily.skin !== i) Stats.hit('skin'); Daily.setSkin(i); skins(); };
     });
     var top = 0; Daily.Skins.forEach(function (k, i) { if (Daily.unlocked(i)) top = i; });
     Hoshi.save('hoshidrop.skinSeen', top); show('skinDot', false);
@@ -93,6 +94,7 @@
     toastTimer = setTimeout(function () { $('toast').classList.remove('on'); }, 2200);
   }
   function dailyResult(r) {
+    r.done.forEach(function () { Stats.hit('daily1'); }); if (r.all) Stats.hit('daily3');
     if (!r.done.length && !r.all) return;
     var msg = r.done.length ? fmt(Hoshi.t(T.clear), r.done.length * (Daily.back ? 2 : 1)) : '';
     if (r.all) msg = (msg ? msg + '　' : '') + Hoshi.t(T.allClear);
@@ -169,6 +171,7 @@
   function over() {
     var gen = G.gen; $('pauseBtn').disabled = true;
     var s = G.score, rec = s > best;
+    Stats.hit('games');
     var dr = Daily.on('over', { score: s, maxTier: G.maxTier }), dayUp = Daily.dayBest(s);
     if (rec) { best = s; Hoshi.save('hoshidrop.best', best); }
     [523, 440, 349].forEach(function (f, i) { setTimeout(function () { Hoshi.tone(f, 0.3, 'triangle', 0.1); }, i * 160); });
@@ -193,7 +196,7 @@
       if (bi >= 0) h += '<br><small>' + Daily.text(bi) + '　<b class="left">' + fmt(Hoshi.t(T.left), bl) + '</b></small>';
     } else h += '<button class="b small" id="toFortune">' + Hoshi.t(T.fortune) + '</button>';
     $('overDaily').innerHTML = h;
-    var b = $('toFortune'); if (b) b.onclick = function () { click(); Hoshi.open('https://miniapp.line.me/2012616308-afvj7xfX'); };
+    var b = $('toFortune'); if (b) b.onclick = function () { click(); Stats.hit('lucky'); Hoshi.open('https://miniapp.line.me/2012616308-afvj7xfX'); };
   }
   function countUp(el, to) {
     var t0 = performance.now();
@@ -202,7 +205,7 @@
       if (p < 1) requestAnimationFrame(f);
     })(t0);
   }
-  $('share').onclick = function () { click(); Hoshi.share(fmt(Hoshi.t(T.shareText), G.score, Hoshi.t(Tiers[G.maxTier]))); };
+  $('share').onclick = function () { click(); Stats.hit('share'); Hoshi.share(fmt(Hoshi.t(T.shareText), G.score, Hoshi.t(Tiers[G.maxTier]))); };
 
   // 動作確認用（#demo / #over / #book）
   var d = location.hash.slice(1);

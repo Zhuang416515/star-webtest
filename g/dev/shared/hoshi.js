@@ -66,7 +66,7 @@
         a.className = 'promo-card';
         a.innerHTML = '<img src="../' + g.icon + '" alt=""><div><b>' + H.t(g.name) + '</b><span>' + H.t(g.desc) +
           '</span></div><em>' + H.t({ ja: 'あそぶ', zh: '去玩' }) + '</em>';
-        a.onclick = function () { H.open(g.url); };
+        a.onclick = function () { if (window.Stats) Stats.hit('promo'); H.open(g.url); };
         el.appendChild(a);
       });
     }).catch(function () { el.innerHTML = ''; });
